@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Block Runner Math</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BLOCK RUNNER MATH — design tokens
+   ============================================================ */
+:root{
+  --sky-top:#6ec6ff; --sky-bot:#bde8ff;
+  --grass:#59c33a; --grass-dark:#3e9427;
+  --dirt:#9b6a3c; --dirt-dark:#7a5230;
+  --panel:#26221b; --panel-edge:#4a4033;
+  --gold:#ffcf4d; --danger:#e9573f; --ok:#7ee081;
+  --ink:#fff8e7; --ink-dim:#cdbfa3;
+  --bevel-light:rgba(255,255,255,.28); --bevel-dark:rgba(0,0,0,.35);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{
+  font-family:'Nunito',system-ui,sans-serif;
+  background:linear-gradient(var(--sky-top),var(--sky-bot) 70%, var(--grass-dark) 70.2%, #2f6e1e);
+  min-height:100vh; display:flex; justify-content:center; color:var(--ink);
+}
+.px{font-family:'Press Start 2P',monospace;}
+
+#app{width:100%; max-width:540px; padding:10px 10px 26px; position:relative;}
+
+/* ---------- HUD ---------- */
+header{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 2px 10px;}
+h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,3.6vw,18px); margin:0;
+   color:var(--ink); text-shadow:3px 3px 0 var(--bevel-dark); letter-spacing:1px;}
+#hud{display:flex; gap:10px; font-family:'Press Start 2P',monospace; font-size:clamp(9px,2.6vw,11px);}
+.hud-chip{background:var(--panel); padding:7px 9px; border:3px solid var(--panel-edge);
+  box-shadow:inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);}
+.hud-chip b{color:var(--gold);}
+
+/* ---------- Canvas ---------- */
+#scene{width:100%; height:190px; display:block; image-rendering:pixelated;
+  border:4px solid var(--panel); box-shadow:inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark);
+  background:linear-gradient(var(--sky-top),var(--sky-bot));}
+
+/* ---------- Progress ---------- */
+#progress-wrap{margin:10px 0 8px;}
+#progress-label{font-family:'Press Start 2P',monospace; font-size:9px; color:var(--panel); margin-bottom:5px;
+  display:flex; justify-content:space-between;}
+#progress-bar{height:16px; background:var(--panel); border:3px solid var(--panel-edge); position:relative;}
+#progress-fill{height:100%; width:0%; background:repeating-linear-gradient(90deg,var(--gold) 0 8px,#e6b52f 8px 16px); transition:width .3s;}
+
+/* ---------- Question panel ---------- */
+#qpanel{background:var(--panel); border:4px solid var(--panel-edge); padding:16px 12px 14px;
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark);}
+#question{font-family:'Press Start 2P',monospace; font-size:clamp(18px,6vw,28px); text-align:center;
+  margin:2px 0 16px; color:var(--ink); text-shadow:2px 2px 0 #000;}
+#answers{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.ans{
+  font-family:'Press Start 2P',monospace; font-size:clamp(14px,4.5vw,20px); color:var(--ink);
+  background:var(--dirt); border:0; padding:18px 8px; cursor:pointer;
+  border-top:6px solid var(--grass); /* grass-block top */
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -4px -4px 0 var(--bevel-dark), 0 4px 0 #4a3220;
+}
+.ans:active{transform:translateY(3px); box-shadow:inset 3px 3px 0 var(--bevel-light), inset -4px -4px 0 var(--bevel-dark), 0 1px 0 #4a3220;}
+.ans.correct{background:#3f9c34; border-top-color:#7ee081;}
+.ans.wrong{background:#a63a2a; border-top-color:var(--danger);}
+.ans:disabled{cursor:default; opacity:.95;}
+
+#combo{margin-top:10px; text-align:center; font-family:'Press Start 2P',monospace; font-size:10px; color:var(--gold); min-height:14px;}
+
+/* ---------- Overlays ---------- */
+.overlay{position:absolute; inset:0; background:rgba(15,20,12,.82); display:flex; align-items:center;
+  justify-content:center; padding:16px; z-index:10;}
+.card{background:var(--panel); border:4px solid var(--panel-edge); padding:22px 18px; width:100%; max-width:440px;
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark); text-align:center;}
+.card h2{font-family:'Press Start 2P',monospace; font-size:clamp(14px,4vw,20px); margin:0 0 14px; color:var(--gold); text-shadow:2px 2px 0 #000;}
+.card p{font-size:15.5px; font-weight:600; color:var(--ink-dim); margin:8px 0; line-height:1.45;}
+.card .big-eq{font-family:'Press Start 2P',monospace; font-size:clamp(14px,4.4vw,20px); color:var(--ink); margin:14px 0;}
+.btn{
+  font-family:'Press Start 2P',monospace; font-size:13px; color:#241a05; background:var(--gold);
+  border:0; padding:15px 22px; margin-top:14px; cursor:pointer;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(0,0,0,.25), 0 4px 0 #9c7a17;
+}
+.btn:active{transform:translateY(3px); box-shadow:inset 3px 3px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(0,0,0,.25), 0 1px 0 #9c7a17;}
+.btn.secondary{background:var(--dirt); color:var(--ink); box-shadow:inset 3px 3px 0 var(--bevel-light), inset -4px -4px 0 var(--bevel-dark), 0 4px 0 #4a3220;}
+
+/* results */
+#stats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; text-align:left;}
+.stat{background:#1a1712; border:3px solid var(--panel-edge); padding:9px 10px;}
+.stat .lab{font-size:11px; font-weight:800; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.5px;}
+.stat .val{font-family:'Press Start 2P',monospace; font-size:13px; color:var(--ink); margin-top:5px;}
+#verdict{font-family:'Press Start 2P',monospace; font-size:clamp(13px,4vw,17px); padding:12px; margin-bottom:4px;}
+#verdict.pass{color:#132b0e; background:var(--ok); box-shadow:0 4px 0 #3f9c34;}
+#verdict.fail{color:#2b0e0e; background:var(--danger); box-shadow:0 4px 0 #a63a2a;}
+#code-box{background:#1a1712; border:3px dashed var(--gold); padding:12px; margin:12px 0 4px;}
+#code-box .lab{font-size:11px; font-weight:800; color:var(--ink-dim); text-transform:uppercase;}
+#session-code{font-family:'Press Start 2P',monospace; font-size:clamp(16px,5vw,22px); color:var(--gold); margin-top:6px; letter-spacing:2px;}
+
+#toast{position:absolute; top:64px; left:50%; transform:translateX(-50%); background:var(--gold); color:#241a05;
+  font-family:'Press Start 2P',monospace; font-size:10px; padding:10px 14px; z-index:20; display:none;
+  box-shadow:0 4px 0 #9c7a17;}
+
+.hidden{display:none !important;}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 id="t-title">BLOCK RUNNER</h1>
+    <div id="hud">
+      <div class="hud-chip"><span id="t-score">SCORE</span> <b id="hud-score">0</b></div>
+      <div class="hud-chip">🔥 <b id="hud-streak">0</b></div>
+    </div>
+  </header>
+
+  <canvas id="scene" width="520" height="190"></canvas>
+
+  <div id="progress-wrap">
+    <div id="progress-label"><span id="t-progress">QUESTION 0/20</span><span id="hud-tier">⛏ WOOD</span></div>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+  </div>
+
+  <div id="qpanel">
+    <div id="question">READY?</div>
+    <div id="answers"></div>
+    <div id="combo"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- START -->
+  <div class="overlay" id="start-overlay">
+    <div class="card">
+      <h2 id="s-title">BLOCK RUNNER MATH</h2>
+      <p id="s-desc">Answer math questions to jump over the glitch blocks! Get a streak going to boost your score and unlock gear.</p>
+      <p id="s-rule"></p>
+      <button class="btn" id="btn-start">▶ START RUN</button>
+    </div>
+  </div>
+
+  <!-- WRONG-ANSWER FEEDBACK -->
+  <div class="overlay hidden" id="fb-overlay">
+    <div class="card">
+      <h2 id="fb-title">OOPS!</h2>
+      <div class="big-eq" id="fb-eq"></div>
+      <p id="fb-why"></p>
+      <button class="btn" id="btn-continue">CONTINUE ▶</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="overlay hidden" id="end-overlay">
+    <div class="card">
+      <div id="verdict" class="pass">SESSION PASSED!</div>
+      <div id="stats"></div>
+      <div id="code-box">
+        <div class="lab" id="t-code">SESSION CODE</div>
+        <div id="session-code">BR-000000</div>
+      </div>
+      <p id="end-msg"></p>
+      <button class="btn" id="btn-share">📤 SEND TO PARENT</button>
+      <button class="btn secondary" id="btn-again">↻ PLAY AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PARENT CONFIG — edit these values to tune the game
+   ============================================================ */
+const CONFIG = {
+  QUESTIONS_PER_SESSION: 20,   // how many questions in one session
+  PASS_ACCURACY: 80,           // % correct needed to pass
+  REWARD_MINUTES: 30,          // screen-time minutes shown on the pass screen
+  MAX_TABLE: 12,               // highest multiplication table used
+  LANGUAGE: 'en',              // 'en' or 'ro'
+  SPEED_BONUS_SECONDS: 5,      // answer faster than this = bonus points
+};
+
+/* ---------- translations ---------- */
+const STR = {
+  en: {
+    title:'BLOCK RUNNER', score:'SCORE', progress:(a,b)=>`QUESTION ${a}/${b}`,
+    ready:'READY?', startTitle:'BLOCK RUNNER MATH',
+    startDesc:'Answer math questions to jump over the glitch blocks! Build a streak to boost your score and unlock gear.',
+    startRule:(n,p)=>`${n} questions per run · ${p}% correct to pass`,
+    start:'▶ START RUN', oops:'OOPS!', because:(eq,why)=>`because ${why}`,
+    continue:'CONTINUE ▶', pass:'SESSION PASSED! ✔', fail:'NOT QUITE — RUN AGAIN',
+    statScore:'Score', statAccuracy:'Accuracy', statCorrect:'Correct', statWrong:'Wrong',
+    statTier:'Best rank', statTime:'Time',
+    code:'SESSION CODE', again:'↻ PLAY AGAIN', share:'📤 SEND TO PARENT', copied:'📋 COPIED! PASTE IT IN A MESSAGE',
+    shareMsg:(s)=>`✅ Block Runner Math — PASSED!\nScore ${s.score} · ${s.correct}/${s.total} correct (${s.acc}%) · Rank ${s.tier}\nSession code: ${s.code}\nReward: ${s.mins} min screen time 🎮`,
+    passMsg:(m)=>`Show this screen to your parent to earn ${m} minutes of screen time! The code only works today.`,
+    failMsg:(p)=>`You need ${p}% accuracy. You're close — one more run!`,
+    combo:(x)=>`COMBO x${x}`, speed:'⚡ SPEED BONUS +5',
+    unlockHelmet:'🪖 GOLD HELMET UNLOCKED!', unlockCape:'🟥 CAPE UNLOCKED!',
+    tierUp:'⛏ RANK UP!', tiers:['WOOD','STONE','IRON','DIAMOND'],
+  },
+  ro: {
+    title:'BLOCK RUNNER', score:'SCOR', progress:(a,b)=>`ÎNTREBAREA ${a}/${b}`,
+    ready:'GATA?', startTitle:'BLOCK RUNNER MATH',
+    startDesc:'Răspunde la întrebări de matematică pentru a sări peste blocurile-glitch! Fă un streak ca să-ți crești scorul și să deblochezi echipament.',
+    startRule:(n,p)=>`${n} întrebări pe rundă · ${p}% corecte pentru a trece`,
+    start:'▶ START', oops:'UPS!', because:(eq,why)=>`pentru că ${why}`,
+    continue:'CONTINUĂ ▶', pass:'SESIUNE TRECUTĂ! ✔', fail:'APROAPE — MAI ÎNCEARCĂ',
+    statScore:'Scor', statAccuracy:'Acuratețe', statCorrect:'Corecte', statWrong:'Greșite',
+    statTier:'Rang maxim', statTime:'Timp',
+    code:'COD SESIUNE', again:'↻ JOACĂ DIN NOU', share:'📤 TRIMITE PĂRINTELUI', copied:'📋 COPIAT! LIPEȘTE-L ÎNTR-UN MESAJ',
+    shareMsg:(s)=>`✅ Block Runner Math — TRECUT!\nScor ${s.score} · ${s.correct}/${s.total} corecte (${s.acc}%) · Rang ${s.tier}\nCod sesiune: ${s.code}\nRecompensă: ${s.mins} min timp pe ecran 🎮`,
+    passMsg:(m)=>`Arată acest ecran părintelui pentru ${m} minute de timp pe dispozitiv! Codul e valabil doar azi.`,
+    failMsg:(p)=>`Ai nevoie de ${p}% acuratețe. Ești aproape — încă o rundă!`,
+    combo:(x)=>`COMBO x${x}`, speed:'⚡ BONUS VITEZĂ +5',
+    unlockHelmet:'🪖 CASCĂ DE AUR DEBLOCATĂ!', unlockCape:'🟥 PELERINĂ DEBLOCATĂ!',
+    tierUp:'⛏ RANG NOU!', tiers:['LEMN','PIATRĂ','FIER','DIAMANT'],
+  },
+};
+const T = STR[CONFIG.LANGUAGE] || STR.en;
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+const S = {
+  running:false, qIndex:0, correct:0, wrong:0, score:0,
+  streak:0, bestStreak:0, tier:0, bestTier:0,
+  wrongStreak:0, qStartTime:0, sessionStart:0,
+  helmet:false, cape:false, current:null,
+};
+
+/* ============================================================
+   QUESTION ENGINE  (adaptive: tier 0..3)
+   tier 0: ×/÷ tables 1–5   tier 1: 1–9   tier 2: 1–12
+   tier 3: 1–12 + missing-factor questions
+   ============================================================ */
+function rnd(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+
+function makeQuestion(){
+  const maxByTier = [Math.min(5,CONFIG.MAX_TABLE), Math.min(9,CONFIG.MAX_TABLE), CONFIG.MAX_TABLE, CONFIG.MAX_TABLE];
+  const max = maxByTier[S.tier];
+  const a = rnd(2,max), b = rnd(2,max);
+  const kinds = S.tier===3 ? ['mul','div','missing'] : ['mul','div'];
+  const kind = kinds[rnd(0,kinds.length-1)];
+  let text, answer, why;
+  if(kind==='mul'){
+    text = `${a} × ${b} = ?`; answer = a*b;
+    why = `${a} × ${b} = ${a*b}`;
+  } else if(kind==='div'){
+    text = `${a*b} ÷ ${a} = ?`; answer = b;
+    why = `${b} × ${a} = ${a*b}`;
+  } else {
+    text = `? × ${a} = ${a*b}`; answer = b;
+    why = `${a*b} ÷ ${a} = ${b}`;
+  }
+  // distractors: plausible near-misses
+  const opts = new Set([answer]);
+  const cands = [answer+1, answer-1, answer+2, answer-2, answer+a, Math.max(1,answer-a), answer+10, b*(a+1)];
+  while(opts.size<4){
+    let c = cands.length ? cands.splice(rnd(0,cands.length-1),1)[0] : answer + rnd(3,9);
+    if(c>0 && !opts.has(c)) opts.add(c);
+  }
+  const options = [...opts].sort(()=>Math.random()-.5);
+  return {text, answer, why, options};
+}
+
+/* ============================================================
+   AUDIO (tiny WebAudio blips, no assets)
+   ============================================================ */
+let AC=null;
+function beep(freq, dur=0.09, type='square', vol=0.06){
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(AC.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+dur);
+    o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+const sfxGood=()=>{beep(660,.07);setTimeout(()=>beep(880,.1),70);};
+const sfxBad =()=>{beep(220,.15,'sawtooth');};
+const sfxUnlock=()=>{beep(523,.08);setTimeout(()=>beep(659,.08),80);setTimeout(()=>beep(784,.14),160);};
+
+/* ============================================================
+   CANVAS RUNNER SCENE
+   ============================================================ */
+const cv = document.getElementById('scene');
+const cx = cv.getContext('2d');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let groundX=0, playerY=0, vy=0, jumping=false, hitFlash=0, obstacleX=560;
+let clouds=[{x:60,y:30},{x:250,y:55},{x:420,y:22}];
+
+function triggerJump(){ if(!jumping){ jumping=true; vy=-9.2; } }
+function triggerHit(){ hitFlash=14; }
+
+function drawBlock(x,y,s,top,side){
+  cx.fillStyle=side; cx.fillRect(x,y,s,s);
+  cx.fillStyle=top; cx.fillRect(x,y,s,Math.max(3,s*0.28));
+  cx.fillStyle='rgba(0,0,0,.14)'; cx.fillRect(x+s-3,y,3,s);
+}
+function draw(){
+  const W=cv.width,H=cv.height, groundY=H-46, B=26;
+  cx.clearRect(0,0,W,H);
+  // sky
+  const g=cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#6ec6ff'); g.addColorStop(1,'#bde8ff');
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+  // pixel clouds
+  cx.fillStyle='rgba(255,255,255,.9)';
+  clouds.forEach(c=>{ cx.fillRect(c.x,c.y,44,10); cx.fillRect(c.x+8,c.y-8,28,10); });
+  // sun block
+  cx.fillStyle='#ffd94d'; cx.fillRect(W-58,16,30,30);
+  // ground: scrolling grass blocks
+  const off = Math.floor(groundX)%B;
+  for(let x=-off; x<W+B; x+=B){ drawBlock(x,groundY,B,'#59c33a','#9b6a3c'); drawBlock(x,groundY+B,B,'#7a5230','#7a5230'); }
+  // obstacle: "glitch block" monster
+  const obY = groundY-30;
+  cx.fillStyle='#8a4fd0'; cx.fillRect(obstacleX,obY,30,30);
+  cx.fillStyle='#5c2f96'; cx.fillRect(obstacleX,obY+20,30,10);
+  cx.fillStyle='#fff'; cx.fillRect(obstacleX+5,obY+8,6,6); cx.fillRect(obstacleX+19,obY+8,6,6);
+  cx.fillStyle='#000'; cx.fillRect(obstacleX+7,obY+10,3,3); cx.fillRect(obstacleX+21,obY+10,3,3);
+  // player (original blocky hero)
+  const px=90, baseY=groundY-44, py=baseY+playerY;
+  if(hitFlash>0 && hitFlash%4<2) cx.globalAlpha=0.35;
+  if(S.cape){ cx.fillStyle='#d0342c'; cx.fillRect(px-9,py+12,9,22); }
+  cx.fillStyle='#f2c49b'; cx.fillRect(px,py,20,16);            // head
+  cx.fillStyle='#5a3a1e'; cx.fillRect(px,py-4,20,6);           // hair
+  if(S.helmet){ cx.fillStyle='#ffcf4d'; cx.fillRect(px-2,py-7,24,8); }
+  cx.fillStyle='#000'; cx.fillRect(px+12,py+6,3,3);            // eye
+  cx.fillStyle='#2fa7a0'; cx.fillRect(px,py+16,20,18);         // shirt
+  cx.fillStyle='#3f57a6';                                       // legs (run cycle)
+  cx.fillRect(px+2,py+34,7,12); cx.fillRect(px+11,py+34,7,12);
+  if(!jumping && !reduceMotion){ cx.fillRect(px+2,py+42,7,4+((Math.floor(groundX/6)%2)?2:0)); }
+  cx.globalAlpha=1;
+}
+function tick(){
+  if(!reduceMotion){ groundX+=3.2; clouds.forEach(c=>{c.x-=0.25; if(c.x<-60)c.x=cv.width+20;}); }
+  // obstacle drifts toward player but waits at a safe distance until answered
+  if(S.running && obstacleX>230) obstacleX-=1.2;
+  if(jumping){ playerY+=vy; vy+=0.55; if(playerY>=0){playerY=0; vy=0; jumping=false;} }
+  if(hitFlash>0) hitFlash--;
+  draw();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ============================================================
+   UI FLOW
+   ============================================================ */
+const $=(id)=>document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.display='block';
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.style.display='none',1800); }
+
+function applyStrings(){
+  $('t-title').textContent=T.title; $('t-score').textContent=T.score;
+  $('s-title').textContent=T.startTitle; $('s-desc').textContent=T.startDesc;
+  $('s-rule').textContent=T.startRule(CONFIG.QUESTIONS_PER_SESSION,CONFIG.PASS_ACCURACY);
+  $('btn-start').textContent=T.start; $('btn-continue').textContent=T.continue;
+  $('btn-again').textContent=T.again; $('t-code').textContent=T.code;
+  $('btn-share').textContent=T.share;
+  $('fb-title').textContent=T.oops; $('question').textContent=T.ready;
+  updateHUD();
+}
+function updateHUD(){
+  $('hud-score').textContent=S.score;
+  $('hud-streak').textContent=S.streak;
+  $('t-progress').textContent=T.progress(S.qIndex,CONFIG.QUESTIONS_PER_SESSION);
+  $('hud-tier').textContent='⛏ '+T.tiers[S.tier];
+  $('progress-fill').style.width=(100*S.qIndex/CONFIG.QUESTIONS_PER_SESSION)+'%';
+}
+function nextQuestion(){
+  S.current=makeQuestion(); S.qStartTime=Date.now();
+  obstacleX=Math.max(obstacleX, 480);
+  $('question').textContent=S.current.text;
+  const box=$('answers'); box.innerHTML='';
+  S.current.options.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='ans'; b.textContent=v;
+    b.onclick=()=>answer(b,v);
+    box.appendChild(b);
+  });
+  $('combo').textContent = S.streak>=2 ? T.combo((1+Math.min(S.streak,10)*0.1).toFixed(1)) : '';
+}
+function answer(btn,val){
+  document.querySelectorAll('.ans').forEach(b=>b.disabled=true);
+  const c=S.current, fast=(Date.now()-S.qStartTime)/1000 < CONFIG.SPEED_BONUS_SECONDS;
+  S.qIndex++;
+  if(val===c.answer){
+    btn.classList.add('correct'); sfxGood(); triggerJump();
+    S.correct++; S.streak++; S.wrongStreak=0;
+    S.bestStreak=Math.max(S.bestStreak,S.streak);
+    const mult=1+Math.min(S.streak,10)*0.1;
+    let pts=Math.round(10*(S.tier+1)*mult);
+    if(fast){ pts+=5; toast(T.speed); }
+    S.score+=pts;
+    // adaptive: 3 in a row -> tier up
+    if(S.streak%3===0 && S.tier<3){ S.tier++; S.bestTier=Math.max(S.bestTier,S.tier); toast(T.tierUp+' '+T.tiers[S.tier]); }
+    S.bestTier=Math.max(S.bestTier,S.tier);
+    // cosmetics
+    if(S.streak===5 && !S.helmet){ S.helmet=true; sfxUnlock(); toast(T.unlockHelmet); }
+    if(S.streak===10 && !S.cape){ S.cape=true; sfxUnlock(); toast(T.unlockCape); }
+    updateHUD();
+    setTimeout(()=> S.qIndex>=CONFIG.QUESTIONS_PER_SESSION ? endSession() : nextQuestion(), 650);
+  } else {
+    btn.classList.add('wrong'); sfxBad(); triggerHit();
+    document.querySelectorAll('.ans').forEach(b=>{ if(+b.textContent===c.answer) b.classList.add('correct'); });
+    S.wrong++; S.streak=0; S.wrongStreak++;
+    if(S.wrongStreak>=2 && S.tier>0){ S.tier--; S.wrongStreak=0; }
+    updateHUD();
+    // corrective feedback
+    setTimeout(()=>{
+      $('fb-eq').textContent=c.text.replace('?',c.answer);
+      $('fb-why').textContent=T.because(c.text,c.why);
+      $('fb-overlay').classList.remove('hidden');
+    },700);
+  }
+}
+$('btn-continue').onclick=()=>{
+  $('fb-overlay').classList.add('hidden');
+  S.qIndex>=CONFIG.QUESTIONS_PER_SESSION ? endSession() : nextQuestion();
+};
+
+/* ---------- session code: bound to today's date + results ---------- */
+function sessionCode(){
+  const d=new Date();
+  const day=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  let h=(day^Math.imul(S.score+7,2654435761))>>>0;
+  h=(h ^ S.correct*97 ^ S.qIndex*31 ^ (S.bestTier+1)*7)>>>0;
+  return 'BR-'+h.toString(36).toUpperCase().padStart(6,'0').slice(-6);
+}
+function endSession(){
+  S.running=false;
+  const acc=Math.round(100*S.correct/Math.max(1,S.qIndex));
+  const pass=acc>=CONFIG.PASS_ACCURACY;
+  const secs=Math.round((Date.now()-S.sessionStart)/1000);
+  const mm=String(Math.floor(secs/60)), ss=String(secs%60).padStart(2,'0');
+  const v=$('verdict');
+  v.textContent=pass?T.pass:T.fail; v.className=pass?'pass':'fail';
+  $('stats').innerHTML=[
+    [T.statScore,S.score],[T.statAccuracy,acc+'%'],
+    [T.statCorrect,S.correct],[T.statWrong,S.wrong],
+    [T.statTier,T.tiers[S.bestTier]],[T.statTime,mm+':'+ss],
+  ].map(([l,val])=>`<div class="stat"><div class="lab">${l}</div><div class="val">${val}</div></div>`).join('');
+  $('session-code').textContent=pass?sessionCode():'— — — — — —';
+  $('end-msg').textContent=pass?T.passMsg(CONFIG.REWARD_MINUTES):T.failMsg(CONFIG.PASS_ACCURACY);
+  S.last={score:S.score, correct:S.correct, total:S.qIndex, acc, tier:T.tiers[S.bestTier],
+          code:pass?sessionCode():'', mins:CONFIG.REWARD_MINUTES};
+  $('btn-share').style.display=pass?'':'none';
+  $('end-overlay').classList.remove('hidden');
+}
+function startSession(){
+  Object.assign(S,{running:true,qIndex:0,correct:0,wrong:0,score:0,streak:0,bestStreak:0,
+    tier:0,bestTier:0,wrongStreak:0,helmet:false,cape:false,sessionStart:Date.now()});
+  obstacleX=520;
+  $('start-overlay').classList.add('hidden');
+  $('end-overlay').classList.add('hidden');
+  updateHUD(); nextQuestion();
+}
+$('btn-start').onclick=()=>{ beep(440,.05); startSession(); };
+$('btn-again').onclick=startSession;
+$('btn-share').onclick=async ()=>{
+  if(!S.last || !S.last.code) return;
+  const text=T.shareMsg(S.last);
+  if(navigator.share){
+    try{ await navigator.share({text}); }catch(e){/* user cancelled */}
+  } else {
+    try{ await navigator.clipboard.writeText(text); toast(T.copied); }
+    catch(e){ prompt('Copy this:', text); }
+  }
+};
+
+applyStrings();
+</script>
+</body>
+</html>

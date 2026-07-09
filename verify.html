@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block Runner — Parent Verifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --panel:#26221b; --panel-edge:#4a4033; --gold:#ffcf4d; --danger:#e9573f; --ok:#7ee081;
+  --ink:#fff8e7; --ink-dim:#cdbfa3; --dirt:#9b6a3c;
+  --bevel-light:rgba(255,255,255,.28); --bevel-dark:rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
+  background:linear-gradient(#6ec6ff,#bde8ff 70%, #3e9427 70.2%, #2f6e1e);
+  min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding:24px 12px;
+}
+.card{background:var(--panel); border:4px solid var(--panel-edge); padding:24px 20px; width:100%; max-width:460px;
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark);}
+h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,4vw,17px); color:var(--gold);
+   margin:0 0 8px; text-shadow:2px 2px 0 #000;}
+p.sub{color:var(--ink-dim); font-weight:600; font-size:14.5px; margin:0 0 18px; line-height:1.45;}
+label{display:block; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.5px;
+  color:var(--ink-dim); margin:14px 0 5px;}
+input,select{
+  width:100%; font-family:'Press Start 2P',monospace; font-size:13px; color:var(--ink);
+  background:#1a1712; border:3px solid var(--panel-edge); padding:12px 10px; outline:none;
+}
+input:focus,select:focus{border-color:var(--gold);}
+.row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+button{
+  width:100%; font-family:'Press Start 2P',monospace; font-size:13px; color:#241a05; background:var(--gold);
+  border:0; padding:15px; margin-top:20px; cursor:pointer;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(0,0,0,.25), 0 4px 0 #9c7a17;
+}
+button:active{transform:translateY(3px); box-shadow:inset 3px 3px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(0,0,0,.25), 0 1px 0 #9c7a17;}
+#result{margin-top:18px; padding:14px; font-family:'Press Start 2P',monospace; font-size:12px;
+  text-align:center; display:none; line-height:1.6;}
+#result.ok{display:block; background:var(--ok); color:#132b0e; box-shadow:0 4px 0 #3f9c34;}
+#result.bad{display:block; background:var(--danger); color:#2b0e0e; box-shadow:0 4px 0 #a63a2a;}
+.hint{margin-top:16px; font-size:13px; color:var(--ink-dim); font-weight:600; line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="t-title">⛏ PARENT VERIFIER</h1>
+  <p class="sub" id="t-sub">Enter the numbers from the results screen your child sent you. If the code matches, the session is genuine and was played today.</p>
+
+  <label id="l-code" for="f-code">Session code</label>
+  <input id="f-code" placeholder="BR-XXXXXX" autocapitalize="characters" autocomplete="off">
+
+  <div class="row">
+    <div>
+      <label id="l-score" for="f-score">Score</label>
+      <input id="f-score" type="number" inputmode="numeric" min="0" placeholder="0">
+    </div>
+    <div>
+      <label id="l-correct" for="f-correct">Correct answers</label>
+      <input id="f-correct" type="number" inputmode="numeric" min="0" placeholder="0">
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label id="l-total" for="f-total">Total questions</label>
+      <input id="f-total" type="number" inputmode="numeric" min="1" value="20">
+    </div>
+    <div>
+      <label id="l-tier" for="f-tier">Best rank</label>
+      <select id="f-tier">
+        <option value="0">WOOD / LEMN</option>
+        <option value="1">STONE / PIATRĂ</option>
+        <option value="2">IRON / FIER</option>
+        <option value="3" selected>DIAMOND / DIAMANT</option>
+      </select>
+    </div>
+  </div>
+
+  <label id="l-date" for="f-date">Session date</label>
+  <input id="f-date" type="date">
+
+  <button id="btn-verify">✔ VERIFY CODE</button>
+  <div id="result"></div>
+
+  <p class="hint" id="t-hint">Codes are bound to the exact score, results and date — an old screenshot or made-up numbers won't verify. If it checks out, open Family Link → your child's device → <b>Bonus time</b>.</p>
+</div>
+
+<script>
+/* Must match the code generator inside index.html exactly. */
+function computeCode(score, correct, total, tier, dateObj){
+  const day = dateObj.getFullYear()*10000 + (dateObj.getMonth()+1)*100 + dateObj.getDate();
+  let h = (day ^ Math.imul(score+7, 2654435761)) >>> 0;
+  h = (h ^ correct*97 ^ total*31 ^ (tier+1)*7) >>> 0;
+  return 'BR-' + h.toString(36).toUpperCase().padStart(6,'0').slice(-6);
+}
+
+const $=(id)=>document.getElementById(id);
+
+// default date = today (local)
+(function(){
+  const d=new Date();
+  $('f-date').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+})();
+
+$('btn-verify').onclick=()=>{
+  const code=($('f-code').value||'').trim().toUpperCase().replace(/\s/g,'');
+  const score=parseInt($('f-score').value,10);
+  const correct=parseInt($('f-correct').value,10);
+  const total=parseInt($('f-total').value,10);
+  const tier=parseInt($('f-tier').value,10);
+  const parts=($('f-date').value||'').split('-').map(Number);
+  const r=$('result');
+
+  if(!code || isNaN(score) || isNaN(correct) || isNaN(total) || parts.length!==3){
+    r.className='bad'; r.textContent='FILL IN ALL FIELDS'; return;
+  }
+  const dateObj=new Date(parts[0], parts[1]-1, parts[2]);
+  const expected=computeCode(score, correct, total, tier, dateObj);
+  const normalized = code.startsWith('BR-') ? code : 'BR-'+code;
+
+  if(normalized===expected){
+    r.className='ok';
+    r.innerHTML='✔ GENUINE SESSION<br>GRANT THE BONUS TIME! 🎮';
+  } else {
+    r.className='bad';
+    r.innerHTML='✘ CODE DOES NOT MATCH<br>CHECK THE NUMBERS & DATE';
+  }
+};
+</script>
+</body>
+</html>
