@@ -71,9 +71,10 @@ Static site, zero build step:
 
 ## Roadmap
 
+- [x] Percentages module + automatic mixed mode (weighted subject mix)
 - [ ] Per-question timer mode
 - [ ] Persistent cosmetic unlocks across sessions
-- [ ] New subject modules: fractions, percentages, vocabulary
+- [ ] New subject modules: fractions, vocabulary
 - [ ] Sound on/off toggle
 - [ ] Optional server-signed session codes (Vercel serverless function)
 

@@ -176,8 +176,12 @@ const CONFIG = {
   PASS_ACCURACY: 80,           // % correct needed to pass
   REWARD_MINUTES: 30,          // screen-time minutes shown on the pass screen
   MAX_TABLE: 12,               // highest multiplication table used
-  LANGUAGE: 'en',              // 'en' or 'ro'
+  LANGUAGE: 'ro',              // 'en' or 'ro'
   SPEED_BONUS_SECONDS: 5,      // answer faster than this = bonus points
+  SUBJECT_MIX: {               // question mix (weights, any positive numbers)
+    arithmetic: 40,            // multiplication & division (keeps old skills warm)
+    percent: 60,               // percentages (the new focus)
+  },
 };
 
 /* ---------- translations ---------- */
@@ -196,6 +200,8 @@ const STR = {
     passMsg:(m)=>`Show this screen to your parent to earn ${m} minutes of screen time! The code only works today.`,
     failMsg:(p)=>`You need ${p}% accuracy. You're close — one more run!`,
     combo:(x)=>`COMBO x${x}`, speed:'⚡ SPEED BONUS +5',
+    pctOf:(p,n)=>`${p}% of ${n} = ?`, pctReverse:(a,n)=>`${a} is what % of ${n}?`,
+    pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`,
     unlockHelmet:'🪖 GOLD HELMET UNLOCKED!', unlockCape:'🟥 CAPE UNLOCKED!',
     tierUp:'⛏ RANK UP!', tiers:['WOOD','STONE','IRON','DIAMOND'],
   },
@@ -213,6 +219,8 @@ const STR = {
     passMsg:(m)=>`Arată acest ecran părintelui pentru ${m} minute de timp pe dispozitiv! Codul e valabil doar azi.`,
     failMsg:(p)=>`Ai nevoie de ${p}% acuratețe. Ești aproape — încă o rundă!`,
     combo:(x)=>`COMBO x${x}`, speed:'⚡ BONUS VITEZĂ +5',
+    pctOf:(p,n)=>`${p}% din ${n} = ?`, pctReverse:(a,n)=>`${a} e ce % din ${n}?`,
+    pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`,
     unlockHelmet:'🪖 CASCĂ DE AUR DEBLOCATĂ!', unlockCape:'🟥 PELERINĂ DEBLOCATĂ!',
     tierUp:'⛏ RANG NOU!', tiers:['LEMN','PIATRĂ','FIER','DIAMANT'],
   },
@@ -236,32 +244,52 @@ const S = {
    ============================================================ */
 function rnd(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
 
-function makeQuestion(){
+/* build the 4 answer options around the correct answer */
+function finishQ(text, answer, why, solved){
+  const opts = new Set([answer]);
+  const cands = [answer+1, answer-1, answer+2, answer-2, answer+5, answer-5,
+                 answer+10, answer*2, Math.round(answer/2)];
+  while(opts.size<4){
+    let c = cands.length ? cands.splice(rnd(0,cands.length-1),1)[0] : answer + rnd(3,12);
+    if(Number.isInteger(c) && c>0 && !opts.has(c)) opts.add(c);
+  }
+  return {text, answer, why, solved: solved || text.replace('?', answer),
+          options:[...opts].sort(()=>Math.random()-.5)};
+}
+
+/* multiplication & division (the original module) */
+function makeArithmetic(){
   const maxByTier = [Math.min(5,CONFIG.MAX_TABLE), Math.min(9,CONFIG.MAX_TABLE), CONFIG.MAX_TABLE, CONFIG.MAX_TABLE];
   const max = maxByTier[S.tier];
   const a = rnd(2,max), b = rnd(2,max);
   const kinds = S.tier===3 ? ['mul','div','missing'] : ['mul','div'];
   const kind = kinds[rnd(0,kinds.length-1)];
-  let text, answer, why;
-  if(kind==='mul'){
-    text = `${a} × ${b} = ?`; answer = a*b;
-    why = `${a} × ${b} = ${a*b}`;
-  } else if(kind==='div'){
-    text = `${a*b} ÷ ${a} = ?`; answer = b;
-    why = `${b} × ${a} = ${a*b}`;
-  } else {
-    text = `? × ${a} = ${a*b}`; answer = b;
-    why = `${a*b} ÷ ${a} = ${b}`;
+  if(kind==='mul')  return finishQ(`${a} × ${b} = ?`, a*b, `${a} × ${b} = ${a*b}`);
+  if(kind==='div')  return finishQ(`${a*b} ÷ ${a} = ?`, b, `${b} × ${a} = ${a*b}`);
+  return finishQ(`? × ${a} = ${a*b}`, b, `${a*b} ÷ ${a} = ${b}`);
+}
+
+/* percentages (new module) — whole-number answers only, difficulty by tier */
+function makePercent(){
+  const pSets = [ [10,50], [10,25,50], [5,10,20,25,50,75], [5,10,20,25,50,75] ];
+  const step  = {5:20, 10:10, 20:5, 25:4, 50:2, 75:4};   // keeps n divisible
+  const maxN  = [100, 200, 300, 400][S.tier];
+  const p = pSets[S.tier][rnd(0, pSets[S.tier].length-1)];
+  const n = step[p] * rnd(2, Math.floor(maxN/step[p]));
+  const answer = n*p/100;
+  // tier 3 sometimes flips the question: "45 is what % of 180?"
+  if(S.tier===3 && Math.random()<0.4){
+    return finishQ(T.pctReverse(answer, n), p, `${answer} × 100 ÷ ${n} = ${p}`,
+                   T.pctSolved(answer, p, n));
   }
-  // distractors: plausible near-misses
-  const opts = new Set([answer]);
-  const cands = [answer+1, answer-1, answer+2, answer-2, answer+a, Math.max(1,answer-a), answer+10, b*(a+1)];
-  while(opts.size<4){
-    let c = cands.length ? cands.splice(rnd(0,cands.length-1),1)[0] : answer + rnd(3,9);
-    if(c>0 && !opts.has(c)) opts.add(c);
-  }
-  const options = [...opts].sort(()=>Math.random()-.5);
-  return {text, answer, why, options};
+  return finishQ(T.pctOf(p, n), answer, `${n} × ${p} ÷ 100 = ${answer}`);
+}
+
+/* mixed mode: pick the subject by the weights in CONFIG.SUBJECT_MIX */
+function makeQuestion(){
+  const mix = CONFIG.SUBJECT_MIX;
+  const total = mix.arithmetic + mix.percent;
+  return rnd(1,total) <= mix.percent ? makePercent() : makeArithmetic();
 }
 
 /* ============================================================
@@ -409,7 +437,7 @@ function answer(btn,val){
     updateHUD();
     // corrective feedback
     setTimeout(()=>{
-      $('fb-eq').textContent=c.text.replace('?',c.answer);
+      $('fb-eq').textContent=c.solved;
       $('fb-why').textContent=T.because(c.text,c.why);
       $('fb-overlay').classList.remove('hidden');
     },700);
