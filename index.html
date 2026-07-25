@@ -182,6 +182,14 @@ const CONFIG = {
     arithmetic: 40,            // multiplication & division (keeps old skills warm)
     percent: 60,               // percentages (the new focus)
   },
+  /* --- Home Assistant (optional) ---
+     RECOMMENDED (public repo): set this to '/api/report' and put the real
+     webhook URL in a Vercel environment variable named HA_WEBHOOK_URL
+     (Vercel → Settings → Environment Variables). The secret never touches
+     the repo. Alternatively (private repo only) paste the full URL here.
+     Leave empty ('') to disable. Results arrive in HA as trigger.query.* */
+  HA_WEBHOOK_URL: '/api/report',
+  PLAYER_NAME: 'Evelin',       // sent to HA, useful if you add more kids later
 };
 
 /* ---------- translations ---------- */
@@ -201,7 +209,7 @@ const STR = {
     failMsg:(p)=>`You need ${p}% accuracy. You're close — one more run!`,
     combo:(x)=>`COMBO x${x}`, speed:'⚡ SPEED BONUS +5',
     pctOf:(p,n)=>`${p}% of ${n} = ?`, pctReverse:(a,n)=>`${a} is what % of ${n}?`,
-    pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`,
+    pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`, haSent:'📡 SENT TO HOME ASSISTANT',
     unlockHelmet:'🪖 GOLD HELMET UNLOCKED!', unlockCape:'🟥 CAPE UNLOCKED!',
     tierUp:'⛏ RANK UP!', tiers:['WOOD','STONE','IRON','DIAMOND'],
   },
@@ -220,7 +228,7 @@ const STR = {
     failMsg:(p)=>`Ai nevoie de ${p}% acuratețe. Ești aproape — încă o rundă!`,
     combo:(x)=>`COMBO x${x}`, speed:'⚡ BONUS VITEZĂ +5',
     pctOf:(p,n)=>`${p}% din ${n} = ?`, pctReverse:(a,n)=>`${a} e ce % din ${n}?`,
-    pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`,
+    pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`, haSent:'📡 TRIMIS CĂTRE HOME ASSISTANT',
     unlockHelmet:'🪖 CASCĂ DE AUR DEBLOCATĂ!', unlockCape:'🟥 PELERINĂ DEBLOCATĂ!',
     tierUp:'⛏ RANG NOU!', tiers:['LEMN','PIATRĂ','FIER','DIAMANT'],
   },
@@ -474,6 +482,18 @@ function endSession(){
   S.last={score:S.score, correct:S.correct, total:S.qIndex, acc, tier:T.tiers[S.bestTier],
           code:pass?sessionCode():'', mins:CONFIG.REWARD_MINUTES};
   $('btn-share').style.display=pass?'':'none';
+  /* auto-report to Home Assistant (optional, fire-and-forget) */
+  if(pass && CONFIG.HA_WEBHOOK_URL){
+    const q=new URLSearchParams({
+      player:CONFIG.PLAYER_NAME, score:S.score, correct:S.correct, total:S.qIndex,
+      acc:acc, tier:T.tiers[S.bestTier], code:sessionCode(),
+      mins:CONFIG.REWARD_MINUTES, ts:new Date().toISOString()
+    }).toString();
+    try{
+      fetch(CONFIG.HA_WEBHOOK_URL+'?'+q, {method:'POST', mode:'no-cors', keepalive:true})
+        .then(()=>toast(T.haSent)).catch(()=>{});
+    }catch(e){}
+  }
   $('end-overlay').classList.remove('hidden');
 }
 function startSession(){
