@@ -97,9 +97,23 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); mar
   <!-- START -->
   <div class="card" id="start-screen">
     <div id="agent-label">PROFESORUL VIRTUAL</div>
-    <p>Salut, Evelin! Îți pun <b>10 întrebări de geografie</b>. Răspunzi cu vocea ta —
+    <p>Salut, Evelin! Îți pun <b>10 întrebări</b>. Răspunzi cu vocea ta —
     apasă microfonul, vorbește, apoi trimite. Ai nevoie de <b>8 răspunsuri bune</b>
-    pentru 30 de minute bonus. Succes! 🌍</p>
+    pentru 30 de minute bonus. Alege-ți misiunea! ⚔️</p>
+    <label style="display:block;font-size:12px;font-weight:800;color:var(--ink-dim);
+      text-transform:uppercase;margin:12px 0 5px;text-align:left">Materia</label>
+    <select id="sel-subject" style="width:100%;font-family:'Press Start 2P',monospace;
+      font-size:11px;color:var(--ink);background:#1a1712;border:3px solid var(--panel-edge);
+      padding:12px 8px">
+      <option value="romana">⚔️ ROMÂNĂ · Vânătorii de Cuvinte</option>
+      <option value="mate">🌿 MATE · Spițeria Numerelor</option>
+      <option value="geografie">🗺 GEOGRAFIE · Atlasul Vrăjitorului</option>
+    </select>
+    <label style="display:block;font-size:12px;font-weight:800;color:var(--ink-dim);
+      text-transform:uppercase;margin:12px 0 5px;text-align:left">Rang</label>
+    <select id="sel-rank" style="width:100%;font-family:'Press Start 2P',monospace;
+      font-size:11px;color:var(--ink);background:#1a1712;border:3px solid var(--panel-edge);
+      padding:12px 8px"></select>
     <button class="btn" id="btn-start">▶ ÎNCEPE QUIZ-UL</button>
   </div>
 
@@ -210,6 +224,20 @@ async function api(payload){
 }
 
 /* ---------- flux ---------- */
+/* ---------- materii și ranguri ---------- */
+const RANKS={
+  romana:[['mukyu','MUKYU'],['kanoe','KANOE'],['kinoe','KINOE'],['stalp','STÂLP']],
+  mate:[['ucenic','UCENIC'],['spiter','SPIȚER'],['maestru','MAESTRU'],['consilier','CONSILIER IMPERIAL']],
+  geografie:[['live','EXPLORATOR']],
+};
+function fillRanks(){
+  const s=$('sel-subject').value, box=$('sel-rank');
+  box.innerHTML='';
+  RANKS[s].forEach(([v,l])=>{ const o=document.createElement('option'); o.value=v; o.textContent=l; box.appendChild(o); });
+}
+$('sel-subject').onchange=fillRanks;
+fillRanks();
+
 async function startQuiz(){
   $('start-screen').classList.add('hidden');
   $('final').style.display='none';
@@ -226,7 +254,8 @@ async function startQuiz(){
   $('load-msg').textContent=MSGS[0];
   const loadTimer=setInterval(()=>{ mi=(mi+1)%MSGS.length; $('load-msg').textContent=MSGS[mi]; }, 1800);
   try{
-    const d=await api({action:'start'});
+    const d=await api({action:'start',
+      subject:$('sel-subject').value, rank:$('sel-rank').value});
     token=d.token;
     clearInterval(loadTimer);
     $('loading').style.display='none';
