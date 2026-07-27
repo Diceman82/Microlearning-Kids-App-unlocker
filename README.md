@@ -1,88 +1,157 @@
-# Block Runner Math ⛏
+# Block Runner Math & Quiz Wizard ⛏🧙
 
-**Microlearning Kids App-unlocker** — a gamified microlearning web app that turns
-screen time into something kids earn. Built for a 13-year-old on Google Family
-Link: she completes short math challenges, gets a verifiable session code, and
-the parent grants bonus screen time from the Family Link app.
+**Microlearning Kids App-unlocker** — a gamified microlearning platform that
+turns screen time into something kids earn. Built for a 13-year-old on Google
+Family Link: she completes short learning challenges, results are validated
+server-side, and bonus screen time lands on her phone **automatically** through
+Home Assistant.
 
-Minecraft-inspired endless runner, original blocky pixel art, no copyrighted
-assets, no backend, no tracking. Deploys to Vercel as a static site.
+Two learning experiences share one launcher and one reward chain:
 
-## How it works
+- **⛏ Block Runner** — a Minecraft-inspired endless-runner math game
+  (multiplication & division, fractions, percentages, order of operations)
+- **🧙 Quiz Wizard** — a voice quiz agent (Geography, 6th grade): an
+  LLM-powered virtual teacher asks open questions out loud, the student
+  answers **with her voice**, and the agent evaluates the ideas, not the
+  phrasing
 
-1. **Play** — 20 adaptive multiplication & division questions across 4 ranks
-   (Wood → Stone → Iron → Diamond), with streaks, combos, speed bonuses, and
-   unlockable cosmetics.
-2. **Pass** — score ≥80% to earn a **session code** bound to today's date and
-   the exact results. Yesterday's screenshot won't work today.
-3. **Share** — the results screen has a *Send to parent* button that opens the
-   native share sheet (WhatsApp / Telegram / SMS) with a pre-filled message.
-4. **Verify** — parent opens `/verify`, enters the code and stats, and the page
-   confirms locally whether the code is genuine.
-5. **Reward** — parent grants **Bonus time** via the Google Family Link app.
+No copyrighted assets, no tracking, no database. Static site + serverless
+functions, deploys to Vercel.
 
-## Features
+## Architecture
 
-- Adaptive difficulty engine (harder after streaks, easier after mistakes)
-- Immediate corrective feedback on wrong answers
-  (e.g. *56 ÷ 8 = 7, because 7 × 8 = 56*)
-- Anti-cheat session codes (deterministic hash of score + results + date)
-- Parent verifier page (`/verify`) — no server, no accounts
-- Web Share API with clipboard fallback
-- Mobile-first, touch controls, respects `prefers-reduced-motion`
-- English & Romanian built in (single-line config switch)
-- Original pixel art — no third-party sprites or trademarks
-
-## Configuration
-
-All parent-facing settings live in one block at the top of `index.html`:
-
-```js
-const CONFIG = {
-  QUESTIONS_PER_SESSION: 20,   // questions per run
-  PASS_ACCURACY: 80,           // % correct needed to pass
-  REWARD_MINUTES: 30,          // minutes shown on the pass screen
-  MAX_TABLE: 12,               // highest multiplication table
-  LANGUAGE: 'en',              // 'en' or 'ro'
-  SPEED_BONUS_SECONDS: 5,      // answer faster than this = bonus points
-};
+```
+                     ┌───────────── Vercel ─────────────┐
+  Kid's phone ──────►│ index.html  (launcher + math game)│
+                     │ quiz.html   (voice quiz client)   │
+                     │ verify.html (manual verifier)     │
+                     │ api/report.js (validates session  │
+                     │   codes server-side, hides HA URL)│
+                     │ api/quiz.js  (LLM quiz brain:     │
+                     │   questions, grading, HMAC state) │
+                     │ api/tts.js   (neural TTS proxy)   │
+                     └───────┬──────────────────────────┘
+                             │ webhook (verified results only)
+                             ▼
+                   Home Assistant (Raspberry Pi, Nabu Casa)
+                             │ instant auto-grant automation
+                             │ (max 2 bonuses/day counter)
+                             ▼
+                HAFamilyLink (HACS) → Google Family Link
+                             ▼
+                   +30 min screen time on kid's device
 ```
 
-> Note: the session-code hash function exists in both `index.html` and
-> `verify.html`. If you ever change it, change it in **both** files.
+The reward chain is the stable contract: any future learning frontend just
+needs to produce a validated result and call `/api/report`.
 
-## Deploy
+## How it works (kid's view)
 
-Static site, zero build step:
+1. Open the app → **choose your adventure**: Block Runner or Quiz Wizard
+2. **Block Runner**: 20 adaptive questions across 4 ranks
+   (Wood → Stone → Iron → Diamond), streaks, combos, unlockable cosmetics.
+   Pass = ≥80%.
+3. **Quiz Wizard**: 10 open questions read aloud by a neural voice; answer by
+   speaking (speech recognition, with text fallback). Pass = 8/10.
+4. On pass, the reward arrives on her phone automatically within seconds —
+   the parent just gets an informational notification.
 
-1. Push this repo to GitHub
-2. Import into [Vercel](https://vercel.com) (Framework preset: **Other**, no
-   build command)
-3. Done — bookmark `your-project.vercel.app` for the kid and
-   `your-project.vercel.app/verify` for the parent
+## Anti-cheat & trust model
+
+- **Block Runner**: session codes are a deterministic hash of score + results +
+  date; `api/report.js` recomputes and validates them **server-side**
+  (Europe/Bucharest date) before anything reaches Home Assistant. Forged or
+  replayed reports die at the proxy.
+- **Quiz Wizard**: fully server-authoritative — questions, grading, scoring and
+  the reward call all happen in `api/quiz.js`; session state travels as an
+  HMAC-signed token the client cannot tamper with.
+- **Home Assistant**: only accepts reports marked `verified=1`, and caps
+  rewards at 2/day via a counter helper (reset at midnight).
+- Manual fallback always works: a "Send to parent" share button + `/verify`
+  page for human verification, should any cloud piece ever break.
 
 ## Files
 
-| File          | Purpose                                  |
-| ------------- | ---------------------------------------- |
-| `index.html`  | The game                                 |
-| `verify.html` | The parent verifier                      |
-| `vercel.json` | Enables the clean `/verify` URL          |
+| File | Purpose |
+| --- | --- |
+| `index.html` | Launcher + Block Runner math game (EN/RO) |
+| `quiz.html` | Quiz Wizard voice client (STT + TTS, text fallback) |
+| `verify.html` | Manual parent verifier (offline code check) |
+| `api/report.js` | Session-code validation + HA webhook proxy |
+| `api/quiz.js` | Quiz brain: LLM question generation & grading, HMAC state, reward call |
+| `api/tts.js` | Neural TTS proxy (ElevenLabs / OpenAI, auto-detected) |
+| `vercel.json` | Clean URLs (`/verify`, `/quiz`) |
+
+## Configuration
+
+**Game** — one block at the top of `index.html`:
+
+```js
+const CONFIG = {
+  QUESTIONS_PER_SESSION: 20,
+  PASS_ACCURACY: 80,
+  REWARD_MINUTES: 30,
+  MAX_TABLE: 12,
+  LANGUAGE: 'ro',                 // 'en' or 'ro'
+  SUBJECT_MIX: { arithmetic: 20, percent: 20, fractions: 30, ops: 30 },
+  HA_WEBHOOK_URL: '/api/report',  // keep as-is; real URL lives in Vercel env
+  PLAYER_NAME: 'Evelin',
+};
+```
+
+**Quiz** — constants at the top of `api/quiz.js`: subject, syllabus (edit to
+match the textbook), questions per quiz, pass threshold, reward minutes.
+
+**Vercel environment variables** (Settings → Environment Variables; never in
+the repo):
+
+| Variable | Required for | Notes |
+| --- | --- | --- |
+| `HA_WEBHOOK_URL` | reward chain | full Nabu Casa webhook URL with a long random id |
+| `ANTHROPIC_API_KEY` | Quiz Wizard | console.anthropic.com |
+| `QUIZ_SECRET` | Quiz Wizard | any long random string (signs quiz state) |
+| `ELEVENLABS_API_KEY` *or* `OPENAI_API_KEY` | neural voice (optional) | absent → browser voice fallback |
+| `ELEVENLABS_VOICE_ID` | optional | custom ElevenLabs voice |
+
+## Home Assistant side
+
+- Integration: [HAFamilyLink](https://github.com/noiwid/HAFamilyLink) (HACS,
+  unofficial — may break if Google changes internals; the manual flow remains
+  as fallback)
+- Automation: webhook trigger (`local_only: false`, long random `webhook_id`)
+  → condition `verified == '1'` → daily counter check → press the device's
+  `_30min` bonus button → informational notification
+- A Lovelace dashboard (screen time, per-device bonus buttons, location, top
+  apps) pairs well with the integration's sensors
+
+## Deploy
+
+1. Push this repo to GitHub (keep the `api/` folder structure)
+2. Import into [Vercel](https://vercel.com) — framework preset **Other**, no
+   build command
+3. Add the environment variables above → Redeploy
+4. On the kid's phone: open the live URL in Chrome → **Add to Home screen**
+   (never share the game as a file — it must run from the live URL)
 
 ## Roadmap
 
-- [x] Percentages module + automatic mixed mode (weighted subject mix)
-- [ ] Per-question timer mode
-- [ ] Persistent cosmetic unlocks across sessions
-- [ ] New subject modules: fractions, vocabulary
-- [ ] Sound on/off toggle
-- [ ] Optional server-signed session codes (Vercel serverless function)
+- [x] Adaptive math game (multiplication/division, percentages, fractions, order of operations)
+- [x] Server-side session-code validation
+- [x] Home Assistant instant auto-grant (max 2/day)
+- [x] Voice quiz agent (Geography) with LLM grading + neural TTS
+- [x] Adventure launcher (game / quiz)
+- [ ] Local AI box: Piper TTS + Whisper STT on a dedicated Pi 5 + AI HAT+ 2
+- [ ] Adaptive quiz memory (spaced repetition on weak topics)
+- [ ] More subjects: history, grammar, biology
+- [ ] Session history / progress dashboard
+- [ ] Multi-user support (V4 groundwork)
 
 ## Not affiliated with
 
-Mojang, Microsoft, or Google. "Minecraft-inspired" refers to the visual
-vernacular of blocky pixel worlds only; all art is original. Google Family
-Link integration is a manual parent workflow, not an API integration.
+Mojang, Microsoft, Google, Anthropic, ElevenLabs or OpenAI. "Minecraft-inspired"
+refers to the visual vernacular of blocky pixel worlds only; all art is
+original. Family Link integration relies on an unofficial community project —
+use at your own risk.
 
 ## License
 
