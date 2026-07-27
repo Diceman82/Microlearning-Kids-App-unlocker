@@ -122,18 +122,44 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); mar
 const $=(id)=>document.getElementById(id);
 let token=null, busy=false;
 
-/* ---------- text-to-speech (vocea profesorului) ---------- */
-function speak(text){
-  try{
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang='ro-RO'; u.rate=0.95;
-    const voices=speechSynthesis.getVoices();
-    const ro=voices.find(v=>v.lang && v.lang.startsWith('ro'));
-    if(ro) u.voice=ro;
-    speechSynthesis.speak(u);
-  }catch(e){}
+/* ---------- text-to-speech (vocea profesorului) ----------
+   1) încearcă vocea neurală de pe server (/api/tts, dacă e configurată)
+   2) fallback: vocea locală din browser
+   Ambele întorc un Promise care se rezolvă când VOCEA A TERMINAT. */
+let currentAudio=null;
+function stopSpeech(){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  if(currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio=null; }
 }
+async function speak(text){
+  stopSpeech();
+  try{
+    const r=await fetch('/api/tts',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({text})});
+    if(r.ok){
+      const blob=await r.blob();
+      await new Promise((resolve)=>{
+        currentAudio=new Audio(URL.createObjectURL(blob));
+        currentAudio.onended=resolve; currentAudio.onerror=resolve;
+        currentAudio.play().catch(resolve);
+      });
+      currentAudio=null;
+      return;
+    }
+  }catch(e){}
+  await new Promise((resolve)=>{
+    try{
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='ro-RO'; u.rate=0.95;
+      const ro=speechSynthesis.getVoices().find(v=>v.lang && v.lang.startsWith('ro'));
+      if(ro) u.voice=ro;
+      u.onend=resolve; u.onerror=resolve;
+      speechSynthesis.speak(u);
+      setTimeout(resolve, Math.max(4000, text.length*85)); // plasă de siguranță
+    }catch(e){ resolve(); }
+  });
+}
+const pause=(ms)=>new Promise(r=>setTimeout(r,ms));
 
 /* ---------- speech-to-text (vocea lui Evelin) ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -154,7 +180,7 @@ if(SR){
 function toggleMic(){
   if(!rec) return;
   if(listening){ rec.stop(); return; }
-  speechSynthesis.cancel();
+  stopSpeech();
   $('transcript').value='';
   try{ rec.start(); listening=true; $('mic').classList.add('listening'); }catch(e){}
 }
@@ -201,12 +227,14 @@ async function sendAnswer(){
     fb.textContent=(d.wasCorrect?'✔ ':'✘ ')+d.feedback;
     fb.className=d.wasCorrect?'good':'bad';
     fb.style.display='block';
-    speak(d.feedback);
+    /* așteaptă ca vocea să TERMINE explicația, apoi 2,5s de respiro */
+    await speak(d.feedback);
+    await pause(2500);
     if(d.done){
-      setTimeout(()=>finish(d.summary), 2600);
+      finish(d.summary);
     } else {
       token=d.token;
-      setTimeout(()=>showQuestion(d.question, d.idx), 3200);
+      showQuestion(d.question, d.idx);
     }
   }catch(e){
     $('feedback').textContent='Eroare de conexiune — trimite din nou.';
