@@ -1,0 +1,16 @@
+{
+  "subject": "Matematică — Spițeria Imperială a Numerelor",
+  "rank": "MAESTRU",
+  "questions": [
+    {"q": "Caz de otrăvire la curte: antidotul acționează în 45 de minute. A fost administrat la 14:40. La ce oră își face efectul?", "ideal": "La 15:25.", "concepts": ["calcul cu ore și minute", "15:25"]},
+    {"q": "Două clepsidre: una se golește la fiecare 4 minute, cealaltă la fiecare 6 minute. Dacă pornesc împreună, după câte minute se golesc din nou simultan?", "ideal": "După 12 minute — cel mai mic multiplu comun al lui 4 și 6.", "concepts": ["cmmmc 4 și 6", "12"]},
+    {"q": "Deducție inversă: 20% dintr-o cantitate înseamnă 12 grame. Care e cantitatea întreagă?", "ideal": "60 de grame — 12 × 5.", "concepts": ["procent invers", "60"]},
+    {"q": "Cât face 1/2 plus 1/4? Răspunde ca fracție.", "ideal": "3/4.", "concepts": ["adunare fracții numitori diferiți", "3/4"]},
+    {"q": "Un unghi de 110 grade are un frate cu care formează împreună o linie dreaptă. Cât măsoară suplementul său?", "ideal": "70 de grade (180 − 110).", "concepts": ["unghi suplementar", "70"]},
+    {"q": "Fără să împarți: se divide 234 cu 3? Aplică criteriul și explică.", "ideal": "Da — suma cifrelor e 9, care se divide cu 3.", "concepts": ["criteriul divizibilității cu 3", "da, suma cifrelor 9"]},
+    {"q": "Media a trei doze este 8 grame. Două dintre ele au 6 și 9 grame. Cât are a treia?", "ideal": "9 grame — suma totală e 24, iar 24 − 6 − 9 = 9.", "concepts": ["media inversă", "9"]},
+    {"q": "Triunghiul isoscel de pe blazonul spițeriei are unghiul din vârf de 40 de grade. Cât măsoară fiecare unghi de la bază?", "ideal": "70 de grade fiecare — (180 − 40) împărțit la 2.", "concepts": ["triunghi isoscel", "70"]},
+    {"q": "Curierul imperial parcurge 3 kilometri și încă 400 de metri. Câți metri în total?", "ideal": "3400 de metri.", "concepts": ["transformare km în m", "3400"]},
+    {"q": "Proba de maestru: aria unei camere pătrate este 49 de metri pătrați. Cât are latura?", "ideal": "7 metri — pentru că 7 × 7 = 49.", "concepts": ["latura din arie", "7"]}
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "subject": "Limba română — Corpul Vânătorilor de Cuvinte",
+  "rank": "KINOE",
+  "questions": [
+    {"q": "Rang Kinoe — analiza fină. În propoziția «Sabia veche a maestrului strălucea», ce funcție sintactică are cuvântul «veche»?", "ideal": "Atribut (adjectival) — determină substantivul «sabia».", "concepts": ["atribut", "determină substantivul"]},
+    {"q": "«Recruta este curajoasă.» Ce fel de predicat avem aici și din ce e format?", "ideal": "Predicat nominal — verbul copulativ «este» plus numele predicativ «curajoasă».", "concepts": ["predicat nominal", "verb copulativ + nume predicativ"]},
+    {"q": "În cuvântul «poet» avem diftong sau hiat? Explică într-o propoziție.", "ideal": "Hiat — vocalele o și e sunt în silabe diferite: po-et.", "concepts": ["hiat", "vocale în silabe diferite"]},
+    {"q": "«Norii plâng peste satul adormit.» Identifică figura de stil și explică de ce.", "ideal": "Personificare — norilor li se atribuie o acțiune omenească, plânsul.", "concepts": ["personificare", "însușire omenească"]},
+    {"q": "Misiune de decodare: în propoziția «Îi voi duce mesajul mâine», la ce timp este verbul?", "ideal": "Viitor.", "concepts": ["viitor"]},
+    {"q": "Ce parte de vorbire este cuvântul «repede» în propoziția «Recruta aleargă repede» și ce funcție are?", "ideal": "Adverb (de mod), cu funcția de complement (de mod) — arată cum aleargă.", "concepts": ["adverb", "complement de mod"]},
+    {"q": "«Al treilea vânător a sosit.» Ce parte de vorbire este «al treilea»?", "ideal": "Numeral ordinal.", "concepts": ["numeral ordinal"]},
+    {"q": "Formulează o propoziție în care cuvântul «argint» să fie folosit cu sens figurat.", "ideal": "De exemplu: «Luna presăra argint peste ape» — argint înseamnă aici lumină argintie.", "concepts": ["sens figurat", "propoziție corectă cu argint figurat"]},
+    {"q": "«Vânt hoinar, codru bătrân, stele reci» — ce figură de stil domină aceste construcții?", "ideal": "Epitetul — hoinar, bătrân, reci sunt epitete care dau expresivitate.", "concepts": ["epitet"]},
+    {"q": "Proba finală Kinoe: în propoziția «Maestrul îi dă recrutei o misiune», cui răspunde întrebarea «cui?» și ce funcție sintactică are acel cuvânt?", "ideal": "«Recrutei» răspunde la «cui?» — este complement (indirect).", "concepts": ["complement indirect", "recrutei"]}
+  ]
+}

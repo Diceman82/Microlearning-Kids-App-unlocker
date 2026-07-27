@@ -1,0 +1,16 @@
+{
+  "subject": "Limba română — Corpul Vânătorilor de Cuvinte",
+  "rank": "STÂLP",
+  "questions": [
+    {"q": "Probă de Stâlp — capcana supremă a cratimei: «M-ai ajutat mult» sau «Mai ajutat mult»? Alege și explică diferența dintre cele două forme.", "ideal": "«M-ai ajutat» — «m-» e pronume + «ai ajutat» verbul; «mai» într-un singur cuvânt e adverb (de exemplu «mai vino»).", "concepts": ["m-ai vs mai", "pronume + verb vs adverb"]},
+    {"q": "«Cel care se antrenează zilnic va deveni Stâlp» versus «Nu știu ce-l motivează». Explică diferența dintre «cel» și «ce-l».", "ideal": "«Cel» e pronume demonstrativ; «ce-l» = «ce» + pronumele «îl» prescurtat, două cuvinte legate prin cratimă.", "concepts": ["cel vs ce-l", "cratima leagă două cuvinte"]},
+    {"q": "În propoziția «Luptăm până în zori», care este subiectul și de ce nu îl vezi scris?", "ideal": "Subiectul este «noi» — subiect inclus, dedus din forma verbului «luptăm».", "concepts": ["subiect inclus", "noi"]},
+    {"q": "Cuvântul «o» poate fi mai multe părți de vorbire. Dă două exemple de propoziții în care «o» să fie lucruri diferite.", "ideal": "De exemplu: «O sabie strălucea» (articol nehotărât) și «Am văzut-o ieri» (pronume personal). Poate fi și numeral: «o oră, nu două».", "concepts": ["o = articol nehotărât", "o = pronume"]},
+    {"q": "«Ochii ei erau două stele căzute din cer.» Comparație sau metaforă? Justifică precis.", "ideal": "Metaforă — comparația e directă, fără «ca» sau «precum»; ochii sunt numiți stele.", "concepts": ["metaforă", "fără termen de comparație"]},
+    {"q": "Alege forma corectă: «Recruta s-a întors într-o clipă» sau «Recruta s-a întors întro clipă»? Regula?", "ideal": "«Într-o» — întotdeauna cu cratimă: întru + o.", "concepts": ["într-o cu cratimă"]},
+    {"q": "Acordul suprem: «Majoritatea recruților a plecat» sau «Majoritatea recruților au plecat»? (Ambele se aud des — care e acordul gramatical strict?)", "ideal": "Strict gramatical: «majoritatea a plecat» — subiectul e «majoritatea», singular. (Acordul prin înțeles cu pluralul e tolerat în vorbire.)", "concepts": ["acord cu subiectul majoritatea", "singular"]},
+    {"q": "«Frunzele cad, cad, cad peste morminte de eroi.» Ce figură de stil e repetarea și ce efect creează?", "ideal": "Repetiția — accentuează căderea continuă și creează o atmosferă apăsătoare, tristă.", "concepts": ["repetiție", "efect de accentuare"]},
+    {"q": "Desparte în silabe cuvântul «funcție» și spune ce grup de sunete conține.", "ideal": "Func-ți-e — trei silabe; «i» și «e» sunt în hiat (silabe diferite).", "concepts": ["func-ți-e", "hiat"]},
+    {"q": "Misiunea finală de Stâlp: transformă propoziția «Vântul mișcă frunzele» astfel încât să conțină o personificare și un epitet.", "ideal": "De exemplu: «Vântul jucăuș mângâie frunzele adormite» — mângâie = personificare, jucăuș/adormite = epitete.", "concepts": ["personificare", "epitet", "propoziție transformată corect"]}
+  ]
+}

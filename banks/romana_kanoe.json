@@ -1,0 +1,16 @@
+{
+  "subject": "Limba română — Corpul Vânătorilor de Cuvinte",
+  "rank": "KANOE",
+  "questions": [
+    {"q": "Rang Kanoe, prima misiune: desparte în silabe cuvântul «împărăteasă» și numără-le.", "ideal": "Îm-pă-ră-tea-să — cinci silabe.", "concepts": ["despărțire în silabe", "5 silabe"]},
+    {"q": "Demonul Cratimei atacă din nou! Alege forma corectă: «Maestrul i-a dat recrutei o sabie» sau «Maestrul ia dat recrutei o sabie»?", "ideal": "«I-a dat», cu cratimă — «i» e pronume, «a dat» e verbul.", "concepts": ["ortografie i-a", "pronume + verb"]},
+    {"q": "Tehnica Comparației Supreme: care este superlativul absolut al adjectivului «puternic»?", "ideal": "Foarte puternic.", "concepts": ["superlativ absolut", "foarte puternic"]},
+    {"q": "În propoziția «Recruta a învins demonul», la ce timp este verbul «a învins»?", "ideal": "Perfect compus.", "concepts": ["perfect compus"]},
+    {"q": "Misiune de infiltrare: articulează cu articol hotărât cuvântul «munte».", "ideal": "Muntele.", "concepts": ["articol hotărât", "muntele"]},
+    {"q": "«Katana strălucea în lumina lunii.» Cuvântul «lunii» — la ce caz și număr este? Dacă e greu, spune măcar numărul.", "ideal": "Genitiv, numărul singular (arată posesia: lumina cui? a lunii).", "concepts": ["genitiv", "singular"]},
+    {"q": "Câmpul lexical al luptei: spune trei cuvinte care aparțin câmpului lexical «luptă».", "ideal": "De exemplu: sabie, duel, războinic (orice trei cuvinte legate de luptă).", "concepts": ["câmp lexical", "trei cuvinte legate de luptă"]},
+    {"q": "«Are o inimă de piatră» — cuvântul «piatră» e folosit cu sens propriu sau figurat?", "ideal": "Cu sens figurat — înseamnă că e nemilos, nu că inima e din piatră.", "concepts": ["sens figurat"]},
+    {"q": "Alege forma corectă și justifică scurt: «Recruta l-a salvat pe maestru» sau «Recruta la salvat pe maestru»?", "ideal": "«L-a salvat» — «l» e pronume, «a salvat» e verbul; «la» ar fi prepoziție și n-are sens aici.", "concepts": ["ortografie l-a", "pronume + verb auxiliar"]},
+    {"q": "Ultima probă Kanoe: pronumele personal «ei» — la ce persoană și număr este în propoziția «Ei au plecat la antrenament»?", "ideal": "Persoana a III-a, numărul plural.", "concepts": ["persoana a III-a", "plural"]}
+  ]
+}

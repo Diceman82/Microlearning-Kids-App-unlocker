@@ -1,0 +1,16 @@
+{
+  "subject": "Matematică — Spițeria Imperială a Numerelor",
+  "rank": "CONSILIER",
+  "questions": [
+    {"q": "Enigma celor două numere: suma lor e 30, iar diferența 6. Care sunt numerele?", "ideal": "18 și 12.", "concepts": ["sumă și diferență", "18 și 12"]},
+    {"q": "Gardul grădinii pătrate are 36 de metri. Ce arie are grădina?", "ideal": "81 de metri pătrați — latura e 9, iar 9 × 9 = 81.", "concepts": ["perimetru la arie", "81"]},
+    {"q": "Într-un triunghi, două unghiuri au 55 și 65 de grade. Al treilea?", "ideal": "60 de grade — 180 minus 120.", "concepts": ["al treilea unghi", "60"]},
+    {"q": "Ucenica citește 1/2 dintr-un pergament, apoi 1/2 din ce a rămas. Ce fracție din pergament a rămas necitită?", "ideal": "1/4.", "concepts": ["fracție din rest", "1/4"]},
+    {"q": "Duel de puteri: care e mai mare, 2 la puterea a 3-a sau 3 la puterea a 2-a? Cu cât?", "ideal": "3 la a 2-a (9) e mai mare decât 2 la a 3-a (8), cu 1.", "concepts": ["2^3=8, 3^2=9", "9 mai mare cu 1"]},
+    {"q": "5 fiole costă 20 de monede. Câte fiole cumperi cu 32 de monede?", "ideal": "8 fiole — o fiolă costă 4 monede.", "concepts": ["regula de trei", "8"]},
+    {"q": "Un leac se scumpește de la 40 la 50 de monede. Cu ce procent a crescut prețul?", "ideal": "Cu 25% — creșterea de 10 raportată la 40.", "concepts": ["procent de creștere", "25%"]},
+    {"q": "Trei numere naturale consecutive au suma 45. Care sunt?", "ideal": "14, 15 și 16 — cel din mijloc e 45 împărțit la 3.", "concepts": ["numere consecutive", "14 15 16"]},
+    {"q": "Ceasul apei picură o dată la 8 secunde, iar gongul bate o dată la 12 secunde. Dacă pornesc împreună, după câte secunde coincid iar?", "ideal": "După 24 de secunde — cmmmc al lui 8 și 12.", "concepts": ["cmmmc 8 și 12", "24"]},
+    {"q": "Marea probă a Consilierului: 10% din 10% din 1000 de monede. Cât rămâne în palmă?", "ideal": "10 monede — 10% din 1000 e 100, iar 10% din 100 e 10.", "concepts": ["procent din procent", "10"]}
+  ]
+}

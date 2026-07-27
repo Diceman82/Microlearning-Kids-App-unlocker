@@ -1,0 +1,16 @@
+{
+  "subject": "Matematică — Spițeria Imperială a Numerelor",
+  "rank": "SPIȚER",
+  "questions": [
+    {"q": "Un leac cere 3/4 din 60 ml de esență de iasomie. Câți mililitri torni?", "ideal": "45 ml.", "concepts": ["3/4 din 60", "45"]},
+    {"q": "Din 200 de petale culese, 30% s-au uscat. Câte petale s-au uscat?", "ideal": "60 de petale.", "concepts": ["30% din 200", "60"]},
+    {"q": "Cazul celor două pungi: una are 12 rădăcini, alta 18. Vrei grămezi egale, cât mai mari. Care e cel mai mare divizor comun al lui 12 și 18?", "ideal": "6.", "concepts": ["cmmdc 12 și 18", "6"]},
+    {"q": "Camera de uscare e un dreptunghi de 8 metri pe 5 metri. Ce perimetru are?", "ideal": "26 de metri — (8 + 5) × 2.", "concepts": ["perimetru dreptunghi", "26"]},
+    {"q": "Un unghi de 35 de grade are nevoie de perechea lui ca să formeze un unghi drept. Cât are complementul său?", "ideal": "55 de grade (90 − 35).", "concepts": ["unghi complementar", "55"]},
+    {"q": "Deducție de spițer: 3 flacoane costă 12 monede. Cât costă 7 flacoane?", "ideal": "28 de monede — un flacon costă 4.", "concepts": ["regula de trei simplă", "28"]},
+    {"q": "Care fracție e mai mare: 2/3 sau 3/5? Explică scurt cum ai comparat.", "ideal": "2/3 e mai mare — de exemplu adunând la același numitor: 10/15 față de 9/15.", "concepts": ["comparare fracții", "2/3 mai mare"]},
+    {"q": "Puterea ingredientului secret: cât face 2 la puterea a 5-a?", "ideal": "32.", "concepts": ["2^5", "32"]},
+    {"q": "Trei doze cântăresc 5, 8 și 11 grame. Care e media lor?", "ideal": "8 grame — suma 24 împărțită la 3.", "concepts": ["media a trei numere", "8"]},
+    {"q": "Termometrul pivniței arată −3 grade, iar afară sunt 8 grade. Câte grade diferență sunt între pivniță și exterior?", "ideal": "11 grade.", "concepts": ["diferență numere întregi", "11"]}
+  ]
+}

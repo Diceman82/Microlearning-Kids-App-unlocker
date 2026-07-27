@@ -1,0 +1,16 @@
+{
+  "subject": "Matematică — Spițeria Imperială a Numerelor",
+  "rank": "UCENIC",
+  "questions": [
+    {"q": "Primul tău caz, ucenico: câte grade are un unghi drept?", "ideal": "90 de grade.", "concepts": ["unghi drept", "90 grade"]},
+    {"q": "Rețeta cere un sfert din 80 ml de esență de ghimbir. Adică 25% din 80 — cât măsori?", "ideal": "20 ml.", "concepts": ["25% din 80", "20"]},
+    {"q": "Cât este suma unghiurilor în orice triunghi?", "ideal": "180 de grade.", "concepts": ["suma unghiurilor triunghi", "180"]},
+    {"q": "Grădina de plante medicinale e un pătrat cu latura de 6 metri. Ce perimetru are gardul ei?", "ideal": "24 de metri (4 × 6).", "concepts": ["perimetru pătrat", "24"]},
+    {"q": "Ce este un număr prim? Dă și un exemplu.", "ideal": "Un număr care se împarte exact doar la 1 și la el însuși; de exemplu 7.", "concepts": ["definiție număr prim", "exemplu corect"]},
+    {"q": "Din 40 de flacoane, 3/4 sunt cu leacuri. Câte flacoane cu leacuri sunt?", "ideal": "30 de flacoane.", "concepts": ["3/4 din 40", "30"]},
+    {"q": "Dezamorsează otrava calculului: cât face 2 + 3 × 4? Atenție la ordinea operațiilor!", "ideal": "14 — întâi înmulțirea (3 × 4 = 12), apoi adunarea.", "concepts": ["ordinea operațiilor", "14"]},
+    {"q": "Fără să împarți: numărul 785 se divide cu 5? De unde știi?", "ideal": "Da — ultima cifră e 5, deci se divide cu 5.", "concepts": ["criteriul divizibilității cu 5", "da"]},
+    {"q": "Un metru de mătase imperială are câți centimetri?", "ideal": "100 de centimetri.", "concepts": ["1 m = 100 cm"]},
+    {"q": "Ultima probă de ucenic: care este media aritmetică a numerelor 4 și 10?", "ideal": "7 — (4 + 10) împărțit la 2.", "concepts": ["media aritmetică", "7"]}
+  ]
+}
