@@ -70,7 +70,20 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); mar
 #start-screen{text-align:center; padding:26px 14px;}
 #start-screen p{color:var(--ink-dim); font-weight:700; line-height:1.55;}
 #loading{display:none; text-align:center; font-family:'Press Start 2P',monospace;
-  font-size:10px; color:var(--gold); padding:18px; line-height:1.8;}
+  font-size:10px; color:var(--gold); padding:26px 14px; line-height:1.8;}
+.load-blocks{display:flex; justify-content:center; gap:10px; margin-bottom:18px;}
+.load-blocks span{
+  width:26px; height:26px; display:inline-block;
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark);
+  animation:hop 0.9s infinite;
+}
+.load-blocks span:nth-child(1){background:#59c33a; animation-delay:0s;}
+.load-blocks span:nth-child(2){background:#9b6a3c; animation-delay:0.15s;}
+.load-blocks span:nth-child(3){background:#6b3fa0; animation-delay:0.3s;}
+.load-blocks span:nth-child(4){background:#ffcf4d; animation-delay:0.45s;}
+@keyframes hop{0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-16px);}}
+#load-msg{min-height:32px;}
+@media (prefers-reduced-motion: reduce){ .load-blocks span{animation:none;} }
 .hidden{display:none !important;}
 </style>
 </head>
@@ -90,7 +103,10 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); mar
     <button class="btn" id="btn-start">▶ ÎNCEPE QUIZ-UL</button>
   </div>
 
-  <div id="loading">SE PREGĂTESC<br>ÎNTREBĂRILE...</div>
+  <div id="loading">
+    <div class="load-blocks"><span></span><span></span><span></span><span></span></div>
+    <div id="load-msg">SE PREGĂTESC ÎNTREBĂRILE...</div>
+  </div>
 
   <!-- QUIZ -->
   <div id="quiz" class="hidden">
@@ -198,14 +214,27 @@ async function startQuiz(){
   $('start-screen').classList.add('hidden');
   $('final').style.display='none';
   $('loading').style.display='block';
+  /* mesaje rotative cât timp vrăjitorul "lucrează" */
+  const MSGS=[
+    'VRĂJITORUL RĂSFOIEȘTE ATLASUL... 🗺',
+    'SE ALEG CELE MAI BUNE ÎNTREBĂRI...',
+    'SE DESENEAZĂ HĂRȚILE... 🧭',
+    'SE AMESTECĂ POȚIUNEA DE GEOGRAFIE... 🧪',
+    'APROAPE GATA...',
+  ];
+  let mi=0;
+  $('load-msg').textContent=MSGS[0];
+  const loadTimer=setInterval(()=>{ mi=(mi+1)%MSGS.length; $('load-msg').textContent=MSGS[mi]; }, 1800);
   try{
     const d=await api({action:'start'});
     token=d.token;
+    clearInterval(loadTimer);
     $('loading').style.display='none';
     $('quiz').classList.remove('hidden');
     showQuestion(d.question, d.idx);
   }catch(e){
-    $('loading').textContent='EROARE LA PORNIRE — MAI ÎNCEARCĂ';
+    clearInterval(loadTimer);
+    $('load-msg').textContent='EROARE LA PORNIRE — MAI ÎNCEARCĂ';
   }
 }
 function showQuestion(q, idx){
@@ -227,9 +256,8 @@ async function sendAnswer(){
     fb.textContent=(d.wasCorrect?'✔ ':'✘ ')+d.feedback;
     fb.className=d.wasCorrect?'good':'bad';
     fb.style.display='block';
-    /* așteaptă ca vocea să TERMINE explicația, apoi 2,5s de respiro */
+    /* așteaptă ca vocea să TERMINE explicația, apoi direct mai departe */
     await speak(d.feedback);
-    await pause(2500);
     if(d.done){
       finish(d.summary);
     } else {
