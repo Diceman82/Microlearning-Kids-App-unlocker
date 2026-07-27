@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quiz Vocal — Geografie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --panel:#26221b; --panel-edge:#4a4033; --gold:#ffcf4d; --danger:#e9573f; --ok:#7ee081;
+  --ink:#fff8e7; --ink-dim:#cdbfa3; --dirt:#9b6a3c; --blue:#5aa7e0;
+  --bevel-light:rgba(255,255,255,.28); --bevel-dark:rgba(0,0,0,.35);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{
+  margin:0; font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
+  background:linear-gradient(#2b3a67,#1d2947 70%, #3e9427 70.2%, #2f6e1e);
+  min-height:100vh; display:flex; justify-content:center;
+}
+.px{font-family:'Press Start 2P',monospace;}
+#app{width:100%; max-width:540px; padding:14px 12px 30px;}
+header{display:flex; justify-content:space-between; align-items:center; margin:4px 2px 12px;}
+h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); margin:0;
+   text-shadow:3px 3px 0 var(--bevel-dark);}
+#hud{font-family:'Press Start 2P',monospace; font-size:10px; background:var(--panel);
+  padding:8px 10px; border:3px solid var(--panel-edge);}
+#hud b{color:var(--gold);}
+
+.card{background:var(--panel); border:4px solid var(--panel-edge); padding:18px 14px;
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark); margin-bottom:12px;}
+#question{font-size:19px; font-weight:800; line-height:1.5; min-height:56px;}
+#agent-label{font-family:'Press Start 2P',monospace; font-size:9px; color:var(--gold); margin-bottom:10px;}
+
+#mic{
+  display:block; margin:16px auto 8px; width:104px; height:104px; border-radius:0;
+  font-size:44px; background:var(--dirt); border:0; cursor:pointer; color:var(--ink);
+  border-top:6px solid #59c33a;
+  box-shadow:inset 3px 3px 0 var(--bevel-light), inset -4px -4px 0 var(--bevel-dark), 0 5px 0 #4a3220;
+}
+#mic.listening{background:#a63a2a; border-top-color:var(--danger); animation:pulse 1s infinite;}
+@keyframes pulse{50%{transform:scale(1.06);}}
+#mic:active{transform:translateY(3px);}
+#mic-hint{text-align:center; font-size:13px; color:var(--ink-dim); font-weight:700; margin-bottom:8px;}
+
+#transcript{width:100%; font-family:'Nunito',sans-serif; font-weight:700; font-size:16px;
+  color:var(--ink); background:#1a1712; border:3px solid var(--panel-edge); padding:12px; min-height:52px;}
+#transcript:focus{outline:none; border-color:var(--gold);}
+#send{
+  width:100%; font-family:'Press Start 2P',monospace; font-size:13px; color:#241a05; background:var(--gold);
+  border:0; padding:15px; margin-top:10px; cursor:pointer;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(0,0,0,.25), 0 4px 0 #9c7a17;
+}
+#send:disabled{opacity:.5; cursor:default;}
+#send:active{transform:translateY(3px);}
+
+#feedback{display:none; font-size:15.5px; font-weight:700; line-height:1.5; padding:13px;
+  border:3px solid; margin-bottom:12px;}
+#feedback.good{display:block; border-color:var(--ok); color:var(--ok); background:#12250f;}
+#feedback.bad{display:block; border-color:var(--danger); color:#ffb3a7; background:#2a120d;}
+
+#final{display:none; text-align:center;}
+#final h2{font-family:'Press Start 2P',monospace; font-size:15px; color:var(--gold); text-shadow:2px 2px 0 #000;}
+#final .big{font-family:'Press Start 2P',monospace; font-size:26px; margin:12px 0;}
+#final p{color:var(--ink-dim); font-weight:700;}
+.btn{font-family:'Press Start 2P',monospace; font-size:12px; color:#241a05; background:var(--gold);
+  border:0; padding:14px 20px; margin-top:12px; cursor:pointer;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(0,0,0,.25), 0 4px 0 #9c7a17;}
+
+#start-screen{text-align:center; padding:26px 14px;}
+#start-screen p{color:var(--ink-dim); font-weight:700; line-height:1.55;}
+#loading{display:none; text-align:center; font-family:'Press Start 2P',monospace;
+  font-size:10px; color:var(--gold); padding:18px; line-height:1.8;}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🎙 QUIZ GEOGRAFIE</h1>
+    <div id="hud"><a href="/" style="color:var(--ink-dim);text-decoration:none">⛏ înapoi</a> · Întrebarea <b id="hud-idx">–</b>/10</div>
+  </header>
+
+  <!-- START -->
+  <div class="card" id="start-screen">
+    <div id="agent-label">PROFESORUL VIRTUAL</div>
+    <p>Salut, Evelin! Îți pun <b>10 întrebări de geografie</b>. Răspunzi cu vocea ta —
+    apasă microfonul, vorbește, apoi trimite. Ai nevoie de <b>8 răspunsuri bune</b>
+    pentru 30 de minute bonus. Succes! 🌍</p>
+    <button class="btn" id="btn-start">▶ ÎNCEPE QUIZ-UL</button>
+  </div>
+
+  <div id="loading">SE PREGĂTESC<br>ÎNTREBĂRILE...</div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="hidden">
+    <div class="card">
+      <div id="agent-label">PROFESORUL ÎNTREABĂ:</div>
+      <div id="question"></div>
+    </div>
+
+    <div id="feedback"></div>
+
+    <div class="card">
+      <button id="mic" title="Vorbește">🎤</button>
+      <div id="mic-hint">apasă și vorbește · apasă din nou ca să oprești</div>
+      <textarea id="transcript" rows="2" placeholder="...sau scrie răspunsul aici"></textarea>
+      <button id="send">TRIMITE RĂSPUNSUL ▶</button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="card" id="final">
+    <h2 id="final-title">REZULTAT</h2>
+    <div class="big" id="final-score">–/10</div>
+    <p id="final-msg"></p>
+    <button class="btn" id="btn-again">↻ ÎNCĂ UN QUIZ</button>
+  </div>
+</div>
+
+<script>
+const $=(id)=>document.getElementById(id);
+let token=null, busy=false;
+
+/* ---------- text-to-speech (vocea profesorului) ---------- */
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ro-RO'; u.rate=0.95;
+    const voices=speechSynthesis.getVoices();
+    const ro=voices.find(v=>v.lang && v.lang.startsWith('ro'));
+    if(ro) u.voice=ro;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- speech-to-text (vocea lui Evelin) ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec=null, listening=false;
+if(SR){
+  rec=new SR(); rec.lang='ro-RO'; rec.interimResults=true; rec.continuous=false;
+  rec.onresult=(e)=>{
+    let t=''; for(const r of e.results) t+=r[0].transcript;
+    $('transcript').value=t;
+  };
+  rec.onend=()=>{ listening=false; $('mic').classList.remove('listening'); };
+  rec.onerror=()=>{ listening=false; $('mic').classList.remove('listening'); };
+} else {
+  $('mic')?.classList.add('hidden');
+  document.addEventListener('DOMContentLoaded',()=>{ $('mic').style.display='none';
+    $('mic-hint').textContent='Microfonul nu e disponibil în acest browser — scrie răspunsul.'; });
+}
+function toggleMic(){
+  if(!rec) return;
+  if(listening){ rec.stop(); return; }
+  speechSynthesis.cancel();
+  $('transcript').value='';
+  try{ rec.start(); listening=true; $('mic').classList.add('listening'); }catch(e){}
+}
+
+/* ---------- API ---------- */
+async function api(payload){
+  const r=await fetch('/api/quiz',{method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  if(!r.ok) throw new Error('api '+r.status);
+  return r.json();
+}
+
+/* ---------- flux ---------- */
+async function startQuiz(){
+  $('start-screen').classList.add('hidden');
+  $('final').style.display='none';
+  $('loading').style.display='block';
+  try{
+    const d=await api({action:'start'});
+    token=d.token;
+    $('loading').style.display='none';
+    $('quiz').classList.remove('hidden');
+    showQuestion(d.question, d.idx);
+  }catch(e){
+    $('loading').textContent='EROARE LA PORNIRE — MAI ÎNCEARCĂ';
+  }
+}
+function showQuestion(q, idx){
+  $('question').textContent=q;
+  $('hud-idx').textContent=idx;
+  $('transcript').value='';
+  $('feedback').className=''; $('feedback').style.display='none';
+  $('send').disabled=false;
+  speak(q);
+}
+async function sendAnswer(){
+  const ans=$('transcript').value.trim();
+  if(!ans || busy) return;
+  busy=true; $('send').disabled=true;
+  if(listening && rec) rec.stop();
+  try{
+    const d=await api({action:'answer', token, answer:ans});
+    const fb=$('feedback');
+    fb.textContent=(d.wasCorrect?'✔ ':'✘ ')+d.feedback;
+    fb.className=d.wasCorrect?'good':'bad';
+    fb.style.display='block';
+    speak(d.feedback);
+    if(d.done){
+      setTimeout(()=>finish(d.summary), 2600);
+    } else {
+      token=d.token;
+      setTimeout(()=>showQuestion(d.question, d.idx), 3200);
+    }
+  }catch(e){
+    $('feedback').textContent='Eroare de conexiune — trimite din nou.';
+    $('feedback').className='bad'; $('feedback').style.display='block';
+    $('send').disabled=false;
+  }
+  busy=false;
+}
+function finish(s){
+  $('quiz').classList.add('hidden');
+  $('final').style.display='block';
+  $('final-score').textContent=s.correct+'/'+s.total;
+  if(s.passed){
+    $('final-title').textContent='QUIZ TRECUT! ✔';
+    $('final-msg').textContent = s.granted
+      ? 'Bravo! Cele '+s.mins+' de minute bonus au fost trimise automat pe telefonul tău. 🎉'
+      : 'Bravo! Arată-i părintelui acest ecran pentru bonus.';
+    speak('Felicitări, Evelin! Ai trecut quiz-ul!');
+  } else {
+    $('final-title').textContent='APROAPE...';
+    $('final-msg').textContent='Îți trebuie '+s.passNeeded+' din '+s.total+
+      ' răspunsuri bune. Mai încearcă — următorul quiz are alte întrebări!';
+    speak('Aproape! Mai încearcă o dată.');
+  }
+}
+
+$('btn-start').onclick=()=>{ speechSynthesis.getVoices(); startQuiz(); };
+$('btn-again').onclick=startQuiz;
+$('mic').onclick=toggleMic;
+$('send').onclick=sendAnswer;
+</script>
+</body>
+</html>
