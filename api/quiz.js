@@ -21,8 +21,16 @@ const PASS_CORRECT = 8;            // 8/10 = 80%
 const REWARD_MINUTES = 30;
 const PLAYER = 'Evelin';
 
-/* Materia și programa — editează liber după manualul ei */
-const SUBJECT = 'Geografie, clasa a VI-a (România)';
+/* Materiile disponibile. Băncile statice stau în /banks/{subiect}_{rang}.json
+   (formatul generat de prompturile din prompturi_capacitate.md).
+   Dacă banca nu există → fallback: generare live pe materia respectivă. */
+const SUBJECTS = {
+  romana:    { label: 'Limba română (pregătire EN, cls. V–VI)', tier: 'ROMÂNĂ' },
+  mate:      { label: 'Matematică (pregătire EN, cls. V–VI)',   tier: 'MATE' },
+  geografie: { label: 'Geografie, clasa a VI-a',                tier: 'GEOGRAFIE' },
+};
+
+/* Programa pentru generarea live (folosită doar când nu există bancă) */
 const SYLLABUS = `
 Teme din programa de clasa a VI-a (ajustează după manual):
 - Europa: așezare geografică, țărmuri, mări și oceane care o mărginesc
@@ -33,6 +41,18 @@ Teme din programa de clasa a VI-a (ajustează după manual):
 - Uniunea Europeană: state membre, instituții pe scurt
 - Vecinii României și locul României în Europa
 `;
+
+/* încearcă banca statică servită de același deployment */
+async function loadBank(host, subject, rank) {
+  try {
+    const r = await fetch(`https://${host}/banks/${subject}_${rank}.json`);
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (!data.questions || data.questions.length < 1) return null;
+    return data.questions;
+  } catch (e) { return null; }
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 /* ---------- utilitare stare semnată ---------- */
 function sign(data) {
@@ -72,9 +92,9 @@ async function askClaude(system, user, maxTokens = 1500) {
 }
 
 /* ---------- generare quiz ---------- */
-async function generateQuestions() {
+async function generateQuestions(subjectLabel) {
   const system =
-`Ești un profesor de ${SUBJECT} care creează un quiz oral pentru o elevă de 13 ani.
+`Ești un profesor de ${subjectLabel} care creează un quiz oral pentru o elevă de 13 ani.
 Răspunzi DOAR cu JSON valid, fără niciun alt text, în formatul:
 {"questions":[{"q":"...","ideal":"...","concepts":["...","..."]}]}
 Reguli:
@@ -106,13 +126,13 @@ caldă, în română — confirmă sau corectează cu răspunsul bun"}`;
 }
 
 /* ---------- recompensa (webhook HA, direct de pe server) ---------- */
-async function grantReward(correct) {
+async function grantReward(correct, tierLabel) {
   if (!process.env.HA_WEBHOOK_URL) return false;
   const acc = Math.round(100 * correct / QUESTIONS_PER_QUIZ);
   const qs = new URLSearchParams({
     player: PLAYER, score: String(correct * 100), correct: String(correct),
     total: String(QUESTIONS_PER_QUIZ), acc: String(acc),
-    tier: 'GEOGRAFIE', tieridx: '3', code: 'VOICE-AGENT',
+    tier: tierLabel || 'QUIZ', tieridx: '3', code: 'VOICE-AGENT',
     mins: String(REWARD_MINUTES), ts: new Date().toISOString(),
     verified: '1',
   });
@@ -131,11 +151,18 @@ export default async function handler(req, res) {
   const body = req.body || {};
   try {
     if (body.action === 'start') {
-      const questions = await generateQuestions();
-      const state = { questions, idx: 0, correct: 0 };
+      const subjKey = SUBJECTS[body.subject] ? body.subject : 'geografie';
+      const subj = SUBJECTS[subjKey];
+      const rank = String(body.rank || 'live').replace(/[^a-z]/g, '');
+      /* 1) banca statică; 2) fallback: generare live */
+      let questions = await loadBank(req.headers.host, subjKey, rank);
+      let source = 'bank';
+      if (!questions) { questions = await generateQuestions(subj.label); source = 'live'; }
+      questions = shuffle([...questions]).slice(0, QUESTIONS_PER_QUIZ);
+      const state = { questions, idx: 0, correct: 0, tier: subj.tier + (rank !== 'live' ? '·' + rank.toUpperCase() : '') };
       res.status(200).json({
-        token: sign(state),
-        question: questions[0].q, idx: 1, total: QUESTIONS_PER_QUIZ,
+        token: sign(state), source,
+        question: questions[0].q, idx: 1, total: Math.min(QUESTIONS_PER_QUIZ, questions.length),
       });
       return;
     }
@@ -150,7 +177,7 @@ export default async function handler(req, res) {
 
       if (state.idx >= QUESTIONS_PER_QUIZ) {
         const passed = state.correct >= PASS_CORRECT;
-        const granted = passed ? await grantReward(state.correct) : false;
+        const granted = passed ? await grantReward(state.correct, state.tier) : false;
         res.status(200).json({
           feedback: evalr.feedback, wasCorrect: !!evalr.correct, done: true,
           summary: { correct: state.correct, total: QUESTIONS_PER_QUIZ, passed, granted,
