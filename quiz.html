@@ -105,9 +105,9 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); mar
     <select id="sel-subject" style="width:100%;font-family:'Press Start 2P',monospace;
       font-size:11px;color:var(--ink);background:#1a1712;border:3px solid var(--panel-edge);
       padding:12px 8px">
-      <option value="romana">⚔️ ROMÂNĂ · Vânătorii de Cuvinte</option>
-      <option value="mate">🌿 MATE · Spițeria Numerelor</option>
-      <option value="geografie">🗺 GEOGRAFIE · Atlasul Vrăjitorului</option>
+      <option value="romana">⚔️ ROMÂNĂ</option>
+      <option value="mate">🌿 MATE</option>
+      <option value="geografie">🗺 GEOGRAFIE</option>
     </select>
     <label style="display:block;font-size:12px;font-weight:800;color:var(--ink-dim);
       text-transform:uppercase;margin:12px 0 5px;text-align:left">Rang</label>
@@ -227,7 +227,7 @@ async function api(payload){
 /* ---------- materii și ranguri ---------- */
 const RANKS={
   romana:[['mukyu','MUKYU'],['kanoe','KANOE'],['kinoe','KINOE'],['stalp','STÂLP']],
-  mate:[['ucenic','UCENIC'],['spiter','SPIȚER'],['maestru','MAESTRU'],['consilier','CONSILIER IMPERIAL']],
+  mate:[['ucenic','UCENIC'],['spiter','SPIȚER'],['maestru','MAESTRU'],['consilier','CONSILIER']],
   geografie:[['live','EXPLORATOR']],
 };
 function fillRanks(){
