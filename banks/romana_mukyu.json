@@ -1,1 +1,56 @@
-
+{
+  "subject": "Limba română — Corpul Vânătorilor de Cuvinte",
+  "rank": "MUKYU",
+  "questions": [
+    {
+      "q": "Prima ta misiune, recrută: demonul Confuziei a furat un cuvânt! Găsește un sinonim pentru cuvântul «viclean».",
+      "ideal": "Șiret (sau isteț, șmecher).",
+      "concepts": ["sinonim", "viclean = șiret"]
+    },
+    {
+      "q": "Tehnica Respirației Silabelor: desparte în silabe cuvântul «vânător» și spune câte silabe are.",
+      "ideal": "Vâ-nă-tor — trei silabe.",
+      "concepts": ["despărțire în silabe", "3 silabe"]
+    },
+    {
+      "q": "Un diftong s-a ascuns în cuvântul «soare», ca un demon în umbră. Care este el?",
+      "ideal": "Diftongul «oa».",
+      "concepts": ["diftong", "oa"]
+    },
+    {
+      "q": "Scutul Antonimelor te apără doar dacă îl activezi: care este antonimul cuvântului «curajos»?",
+      "ideal": "Fricos (sau laș).",
+      "concepts": ["antonim", "fricos sau laș"]
+    },
+    {
+      "q": "Demonul Cratimei încearcă să te păcălească! Cum se scrie corect: «demonul s-a ascuns» sau «demonul sa ascuns»?",
+      "ideal": "«S-a ascuns», cu cratimă, pentru că «s-a» vine de la «se» plus «a» (verbul auxiliar).",
+      "concepts": ["ortografie s-a cu cratimă", "pronume + verb auxiliar"]
+    },
+    {
+      "q": "Analizează-ți arma, recrută: ce parte de vorbire este cuvântul «sabie»?",
+      "ideal": "Substantiv (comun).",
+      "concepts": ["substantiv"]
+    },
+    {
+      "q": "În propoziția «Recruta aleargă prin pădurea de bambus», găsește predicatul — inima propoziției.",
+      "ideal": "«Aleargă» — predicat verbal.",
+      "concepts": ["predicat", "aleargă"]
+    },
+    {
+      "q": "Maestrul spune: «Luna veghează ca un străjer tăcut.» Ce figură de stil a folosit?",
+      "ideal": "O comparație (luna e comparată cu un străjer, folosind «ca»).",
+      "concepts": ["comparație"]
+    },
+    {
+      "q": "«Vântul șoptește printre frunze» — ce putere secretă (figură de stil) primește vântul aici?",
+      "ideal": "Personificare — vântul primește o însușire omenească, aceea de a șopti.",
+      "concepts": ["personificare"]
+    },
+    {
+      "q": "Ultima probă a rangului Mukyu: spune un cuvânt din familia lexicală a cuvântului «pădure».",
+      "ideal": "Pădurar (sau păduros, împădurit).",
+      "concepts": ["familie lexicală", "pădurar / păduros / împădurit"]
+    }
+  ]
+}
