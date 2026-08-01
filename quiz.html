@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Quiz Vocal — Geografie</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#26221b">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -322,6 +325,9 @@ $('btn-start').onclick=()=>{ speechSynthesis.getVoices(); startQuiz(); };
 $('btn-again').onclick=startQuiz;
 $('mic').onclick=toggleMic;
 $('send').onclick=sendAnswer;
+</script>
+<script>
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
 </script>
 </body>
 </html>
