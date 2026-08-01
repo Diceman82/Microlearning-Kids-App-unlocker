@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Block Runner Math</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#26221b">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -149,7 +152,7 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,3.6vw,18px); mar
     <div class="card">
       <h2 id="m-title">ALEGE AVENTURA</h2>
       <button class="mode-btn runner" id="btn-mode-runner">⛏ BLOCK RUNNER<small id="m-runner-sub">Matematică · alergare printre blocuri</small></button>
-      <button class="mode-btn wizard" id="btn-mode-quiz">🧙 QUIZ WIZARD<small id="m-quiz-sub">Geografie · răspunde cu vocea ta</small></button>
+      <button class="mode-btn wizard" id="btn-mode-quiz">🧙 QUIZ WIZARD<small id="m-quiz-sub">Română · Mate · Geografie — cu vocea ta</small></button>
     </div>
   </div>
 
@@ -236,7 +239,7 @@ const STR = {
     pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`, haSent:'📡 SENT TO HOME ASSISTANT',
     fracOf:(a,b,n)=>`${a}/${b} of ${n} = ?`,
     modeTitle:'CHOOSE YOUR ADVENTURE', modeRunnerSub:'Math · run through the blocks',
-    modeQuizSub:'Geography · answer with your voice',
+    modeQuizSub:'Romanian · Math · Geography — with your voice',
     unlockHelmet:'🪖 GOLD HELMET UNLOCKED!', unlockCape:'🟥 CAPE UNLOCKED!',
     tierUp:'⛏ RANK UP!', tiers:['WOOD','STONE','IRON','DIAMOND'],
   },
@@ -258,7 +261,7 @@ const STR = {
     pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`, haSent:'📡 TRIMIS CĂTRE HOME ASSISTANT',
     fracOf:(a,b,n)=>`${a}/${b} din ${n} = ?`,
     modeTitle:'ALEGE AVENTURA', modeRunnerSub:'Matematică · alergare printre blocuri',
-    modeQuizSub:'Geografie · răspunde cu vocea ta',
+    modeQuizSub:'Română · Mate · Geografie — cu vocea ta',
     unlockHelmet:'🪖 CASCĂ DE AUR DEBLOCATĂ!', unlockCape:'🟥 PELERINĂ DEBLOCATĂ!',
     tierUp:'⛏ RANG NOU!', tiers:['LEMN','PIATRĂ','FIER','DIAMANT'],
   },
@@ -638,6 +641,9 @@ $('btn-share').onclick=async ()=>{
 };
 
 applyStrings();
+</script>
+<script>
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
 </script>
 </body>
 </html>
