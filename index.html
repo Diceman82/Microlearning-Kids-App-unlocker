@@ -100,6 +100,8 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,3.6vw,18px); mar
   color:rgba(255,255,255,.75); margin-top:6px; letter-spacing:0;}
 .mode-btn.runner{background:#3f9c34; border-top:6px solid #7ee081;}
 .mode-btn.wizard{background:#6b3fa0; border-top:6px solid #a97fd6;}
+.mode-btn.emergency{background:#b0402a; border-top:6px solid #ff7a5c;}
+.mode-btn.emergency:disabled{background:#4a3a36; border-top-color:#6a5a55; opacity:.6; cursor:default;}
 .mode-btn:active{transform:translateY(3px);}
 
 /* results */
@@ -153,6 +155,7 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,3.6vw,18px); mar
       <h2 id="m-title">ALEGE AVENTURA</h2>
       <button class="mode-btn runner" id="btn-mode-runner">⛏ BLOCK RUNNER<small id="m-runner-sub">Matematică · alergare printre blocuri</small></button>
       <button class="mode-btn wizard" id="btn-mode-quiz">🧙 QUIZ WIZARD<small id="m-quiz-sub">Română · Mate · Geografie — cu vocea ta</small></button>
+      <button class="mode-btn emergency" id="btn-mode-sos">🚨 URGENȚĂ · +15 MIN<small id="m-sos-sub">5 calcule rapide · <b id="sos-left">3</b> rămase azi</small></button>
     </div>
   </div>
 
@@ -217,6 +220,11 @@ const CONFIG = {
      Leave empty ('') to disable. Results arrive in HA as trigger.query.* */
   HA_WEBHOOK_URL: '/api/report',
   PLAYER_NAME: 'Evelin',       // sent to HA, useful if you add more kids later
+  EMERGENCY: {                 // "la baie" quick mode
+    MINUTES: 15,               // bonus granted per emergency session
+    QUESTIONS: 5,              // number of quick questions
+    MAX_PER_DAY: 3,            // how many emergency bonuses per day
+  },
 };
 
 /* ---------- translations ---------- */
@@ -240,6 +248,7 @@ const STR = {
     fracOf:(a,b,n)=>`${a}/${b} of ${n} = ?`,
     modeTitle:'CHOOSE YOUR ADVENTURE', modeRunnerSub:'Math · run through the blocks',
     modeQuizSub:'Romanian · Math · Geography — with your voice',
+    sosSub:'5 quick sums · left today:', sosFail:'You need all 5 correct. Try again — this one still counts as available!',
     unlockHelmet:'🪖 GOLD HELMET UNLOCKED!', unlockCape:'🟥 CAPE UNLOCKED!',
     tierUp:'⛏ RANK UP!', tiers:['WOOD','STONE','IRON','DIAMOND'],
   },
@@ -262,6 +271,7 @@ const STR = {
     fracOf:(a,b,n)=>`${a}/${b} din ${n} = ?`,
     modeTitle:'ALEGE AVENTURA', modeRunnerSub:'Matematică · alergare printre blocuri',
     modeQuizSub:'Română · Mate · Geografie — cu vocea ta',
+    sosSub:'5 calcule rapide · rămase azi:', sosFail:'Îți trebuie toate 5 corecte. Mai încearcă — asta încă îți rămâne disponibilă!',
     unlockHelmet:'🪖 CASCĂ DE AUR DEBLOCATĂ!', unlockCape:'🟥 PELERINĂ DEBLOCATĂ!',
     tierUp:'⛏ RANG NOU!', tiers:['LEMN','PIATRĂ','FIER','DIAMANT'],
   },
@@ -275,8 +285,10 @@ const S = {
   running:false, qIndex:0, correct:0, wrong:0, score:0,
   streak:0, bestStreak:0, tier:0, bestTier:0,
   wrongStreak:0, qStartTime:0, sessionStart:0,
-  helmet:false, cape:false, current:null,
+  helmet:false, cape:false, current:null, emergency:false,
 };
+/* lungimea sesiunii curente (normal vs urgență) */
+function sessionLen(){ return S.emergency ? CONFIG.EMERGENCY.QUESTIONS : CONFIG.QUESTIONS_PER_SESSION; }
 
 /* ============================================================
    QUESTION ENGINE  (adaptive: tier 0..3)
@@ -409,6 +421,14 @@ function makeOps(){
 
 /* mixed mode: pick the subject by the weights in CONFIG.SUBJECT_MIX */
 function makeQuestion(){
+  /* mod urgență: doar calcule simple (×, ÷, ordinea operațiilor ușoară) */
+  if(S.emergency){
+    const kind=rnd(0,2);
+    if(kind===0){ const a=rnd(2,9), b=rnd(2,9); return finishQ(`${a} × ${b} = ?`, a*b, `${a} × ${b} = ${a*b}`); }
+    if(kind===1){ const a=rnd(2,9), b=rnd(2,9); return finishQ(`${a*b} ÷ ${a} = ?`, b, `${b} × ${a} = ${a*b}`); }
+    const a=rnd(2,9), b=rnd(2,5), c=rnd(2,5);
+    return finishQ(`${a} + ${b} × ${c} = ?`, a+b*c, `${b} × ${c} = ${b*c} → ${a} + ${b*c} = ${a+b*c}`);
+  }
   const makers = { arithmetic: makeArithmetic, percent: makePercent, fractions: makeFraction, ops: makeOps };
   const entries = Object.entries(CONFIG.SUBJECT_MIX).filter(([k,v]) => v>0 && makers[k]);
   let r = rnd(1, entries.reduce((s,[,v]) => s+v, 0));
@@ -518,9 +538,9 @@ function applyStrings(){
 function updateHUD(){
   $('hud-score').textContent=S.score;
   $('hud-streak').textContent=S.streak;
-  $('t-progress').textContent=T.progress(S.qIndex,CONFIG.QUESTIONS_PER_SESSION);
+  $('t-progress').textContent=T.progress(S.qIndex,sessionLen());
   $('hud-tier').textContent='⛏ '+T.tiers[S.tier];
-  $('progress-fill').style.width=(100*S.qIndex/CONFIG.QUESTIONS_PER_SESSION)+'%';
+  $('progress-fill').style.width=(100*S.qIndex/sessionLen())+'%';
 }
 function nextQuestion(){
   S.current=makeQuestion(); S.qStartTime=Date.now();
@@ -554,7 +574,7 @@ function answer(btn,val){
     if(S.streak===5 && !S.helmet){ S.helmet=true; sfxUnlock(); toast(T.unlockHelmet); }
     if(S.streak===10 && !S.cape){ S.cape=true; sfxUnlock(); toast(T.unlockCape); }
     updateHUD();
-    setTimeout(()=> S.qIndex>=CONFIG.QUESTIONS_PER_SESSION ? endSession() : nextQuestion(), 650);
+    setTimeout(()=> S.qIndex>=sessionLen() ? endSession() : nextQuestion(), 650);
   } else {
     btn.classList.add('wrong'); sfxBad(); triggerHit();
     document.querySelectorAll('.ans').forEach(b=>{ if(+b.textContent===c.answer) b.classList.add('correct'); });
@@ -571,7 +591,7 @@ function answer(btn,val){
 }
 $('btn-continue').onclick=()=>{
   $('fb-overlay').classList.add('hidden');
-  S.qIndex>=CONFIG.QUESTIONS_PER_SESSION ? endSession() : nextQuestion();
+  S.qIndex>=sessionLen() ? endSession() : nextQuestion();
 };
 
 /* ---------- session code: bound to today's date + results ---------- */
@@ -580,32 +600,47 @@ function sessionCode(){
   const day=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
   let h=(day^Math.imul(S.score+7,2654435761))>>>0;
   h=(h ^ S.correct*97 ^ S.qIndex*31 ^ (S.bestTier+1)*7)>>>0;
-  return 'BR-'+h.toString(36).toUpperCase().padStart(6,'0').slice(-6);
+  return (S.emergency?'SOS-':'BR-')+h.toString(36).toUpperCase().padStart(6,'0').slice(-6);
+}
+/* ---------- contor local urgențe pe zi (afișare „x rămase") ---------- */
+function sosKey(){ const d=new Date(); return 'sos-'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function sosUsed(){ try{ return parseInt(localStorage.getItem(sosKey())||'0',10)||0; }catch(e){ return 0; } }
+function sosLeft(){ return Math.max(0, CONFIG.EMERGENCY.MAX_PER_DAY - sosUsed()); }
+function bumpSosCount(){ try{ localStorage.setItem(sosKey(), String(sosUsed()+1)); }catch(e){} }
+function refreshSosButton(){
+  const left=sosLeft();
+  const el=$('sos-left'); if(el) el.textContent=left;
+  const btn=$('btn-mode-sos'); if(btn) btn.disabled = left<=0;
 }
 function endSession(){
   S.running=false;
   const acc=Math.round(100*S.correct/Math.max(1,S.qIndex));
   const pass=acc>=CONFIG.PASS_ACCURACY;
+  const rewardMins = S.emergency ? CONFIG.EMERGENCY.MINUTES : CONFIG.REWARD_MINUTES;
+  /* urgența trece cu 100% (5/5); modul normal cu ≥80% */
+  const passed = S.emergency ? (S.correct===sessionLen()) : pass;
   const secs=Math.round((Date.now()-S.sessionStart)/1000);
   const mm=String(Math.floor(secs/60)), ss=String(secs%60).padStart(2,'0');
   const v=$('verdict');
-  v.textContent=pass?T.pass:T.fail; v.className=pass?'pass':'fail';
+  v.textContent=passed?T.pass:T.fail; v.className=passed?'pass':'fail';
   $('stats').innerHTML=[
     [T.statScore,S.score],[T.statAccuracy,acc+'%'],
     [T.statCorrect,S.correct],[T.statWrong,S.wrong],
-    [T.statTier,T.tiers[S.bestTier]],[T.statTime,mm+':'+ss],
+    [T.statTier,S.emergency?'🚨':T.tiers[S.bestTier]],[T.statTime,mm+':'+ss],
   ].map(([l,val])=>`<div class="stat"><div class="lab">${l}</div><div class="val">${val}</div></div>`).join('');
-  $('session-code').textContent=pass?sessionCode():'— — — — — —';
-  $('end-msg').textContent=pass?T.passMsg(CONFIG.REWARD_MINUTES):T.failMsg(CONFIG.PASS_ACCURACY);
+  $('session-code').textContent=passed?sessionCode():'— — — — — —';
+  $('end-msg').textContent=passed?T.passMsg(rewardMins):(S.emergency?T.sosFail:T.failMsg(CONFIG.PASS_ACCURACY));
   S.last={score:S.score, correct:S.correct, total:S.qIndex, acc, tier:T.tiers[S.bestTier],
-          code:pass?sessionCode():'', mins:CONFIG.REWARD_MINUTES};
-  $('btn-share').style.display=pass?'':'none';
+          code:passed?sessionCode():'', mins:rewardMins};
+  $('btn-share').style.display=passed?'':'none';
+  if(passed && S.emergency) bumpSosCount();  // consumă o urgență doar la reușită
   /* auto-report to Home Assistant (optional, fire-and-forget) */
-  if(pass && CONFIG.HA_WEBHOOK_URL){
+  if(passed && CONFIG.HA_WEBHOOK_URL){
     const q=new URLSearchParams({
       player:CONFIG.PLAYER_NAME, score:S.score, correct:S.correct, total:S.qIndex,
-      acc:acc, tier:T.tiers[S.bestTier], tieridx:S.bestTier, code:sessionCode(),
-      mins:CONFIG.REWARD_MINUTES, ts:new Date().toISOString()
+      acc:acc, tier:S.emergency?'URGENTA':T.tiers[S.bestTier], tieridx:S.bestTier,
+      code:sessionCode(), mins:rewardMins, mode:S.emergency?'emergency':'normal',
+      ts:new Date().toISOString()
     }).toString();
     try{
       fetch(CONFIG.HA_WEBHOOK_URL+'?'+q, {method:'POST', mode:'no-cors', keepalive:true})
@@ -614,9 +649,10 @@ function endSession(){
   }
   $('end-overlay').classList.remove('hidden');
 }
-function startSession(){
+function startSession(emergency){
   Object.assign(S,{running:true,qIndex:0,correct:0,wrong:0,score:0,streak:0,bestStreak:0,
-    tier:0,bestTier:0,wrongStreak:0,helmet:false,cape:false,sessionStart:Date.now()});
+    tier:0,bestTier:0,wrongStreak:0,helmet:false,cape:false,sessionStart:Date.now(),
+    emergency:!!emergency});
   obstacleX=520;
   $('start-overlay').classList.add('hidden');
   $('end-overlay').classList.add('hidden');
@@ -627,8 +663,13 @@ $('btn-mode-runner').onclick=()=>{
   $('start-overlay').classList.remove('hidden');
 };
 $('btn-mode-quiz').onclick=()=>{ window.location.href='/quiz'; };
+$('btn-mode-sos').onclick=()=>{
+  if(sosLeft()<=0) return;
+  $('mode-overlay').classList.add('hidden');
+  beep(660,.05); startSession(true);
+};
 $('btn-start').onclick=()=>{ beep(440,.05); startSession(); };
-$('btn-again').onclick=startSession;
+$('btn-again').onclick=()=>startSession(false);
 $('btn-share').onclick=async ()=>{
   if(!S.last || !S.last.code) return;
   const text=T.shareMsg(S.last);
@@ -641,6 +682,7 @@ $('btn-share').onclick=async ()=>{
 };
 
 applyStrings();
+refreshSosButton();
 </script>
 <script>
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
