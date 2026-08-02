@@ -10,10 +10,10 @@
  */
 
 // Must match sessionCode() in index.html exactly.
-function computeCode(score, correct, total, tierIdx, day) {
+function computeCode(score, correct, total, tierIdx, day, prefix) {
   let h = (day ^ Math.imul(score + 7, 2654435761)) >>> 0;
   h = (h ^ correct * 97 ^ total * 31 ^ (tierIdx + 1) * 7) >>> 0;
-  return 'BR-' + h.toString(36).toUpperCase().padStart(6, '0').slice(-6);
+  return (prefix || 'BR-') + h.toString(36).toUpperCase().padStart(6, '0').slice(-6);
 }
 
 function todayInBucharest() {
@@ -46,14 +46,15 @@ export default async function handler(req, res) {
     res.status(400).json({ error: 'missing fields' });
     return;
   }
-  const expected = computeCode(score, correct, total, tierIdx, todayInBucharest());
+  const prefix = code.startsWith('SOS-') ? 'SOS-' : 'BR-';
+  const expected = computeCode(score, correct, total, tierIdx, todayInBucharest(), prefix);
   if (code !== expected) {
     res.status(403).json({ error: 'invalid session code' });
     return;
   }
 
   // --- forward only expected fields, marked as verified ---
-  const allowed = ['player','score','correct','total','acc','tier','tieridx','code','mins','ts'];
+  const allowed = ['player','score','correct','total','acc','tier','tieridx','code','mins','ts','mode'];
   const qs = new URLSearchParams();
   for (const k of allowed) {
     if (req.query[k] !== undefined) qs.set(k, String(req.query[k]).slice(0, 64));
