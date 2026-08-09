@@ -54,7 +54,7 @@ export default async function handler(req, res) {
   }
 
   // --- forward only expected fields, marked as verified ---
-  const allowed = ['player','score','correct','total','acc','tier','tieridx','code','mins','ts','mode'];
+  const allowed = ['player','score','correct','total','acc','tier','tieridx','code','mins','ts','mode','target'];
   const qs = new URLSearchParams();
   for (const k of allowed) {
     if (req.query[k] !== undefined) qs.set(k, String(req.query[k]).slice(0, 64));

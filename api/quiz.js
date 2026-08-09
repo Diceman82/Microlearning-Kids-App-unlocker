@@ -126,15 +126,15 @@ caldă, în română — confirmă sau corectează cu răspunsul bun"}`;
 }
 
 /* ---------- recompensa (webhook HA, direct de pe server) ---------- */
-async function grantReward(correct, tierLabel) {
+async function grantReward(correct, tierLabel, target) {
   if (!process.env.HA_WEBHOOK_URL) return false;
   const acc = Math.round(100 * correct / QUESTIONS_PER_QUIZ);
   const qs = new URLSearchParams({
     player: PLAYER, score: String(correct * 100), correct: String(correct),
     total: String(QUESTIONS_PER_QUIZ), acc: String(acc),
     tier: tierLabel || 'QUIZ', tieridx: '3', code: 'VOICE-AGENT',
-    mins: String(REWARD_MINUTES), ts: new Date().toISOString(),
-    verified: '1',
+    mins: String(REWARD_MINUTES), mode: 'normal', target: target || 'phone',
+    ts: new Date().toISOString(), verified: '1',
   });
   try {
     await fetch(process.env.HA_WEBHOOK_URL + '?' + qs.toString(), { method: 'POST' });
@@ -159,7 +159,9 @@ export default async function handler(req, res) {
       let source = 'bank';
       if (!questions) { questions = await generateQuestions(subj.label); source = 'live'; }
       questions = shuffle([...questions]).slice(0, QUESTIONS_PER_QUIZ);
-      const state = { questions, idx: 0, correct: 0, tier: subj.tier + (rank !== 'live' ? '·' + rank.toUpperCase() : '') };
+      const target = ['phone','tablet','tv'].includes(body.target) ? body.target : 'phone';
+      const state = { questions, idx: 0, correct: 0, target,
+        tier: subj.tier + (rank !== 'live' ? '·' + rank.toUpperCase() : '') };
       res.status(200).json({
         token: sign(state), source,
         question: questions[0].q, idx: 1, total: Math.min(QUESTIONS_PER_QUIZ, questions.length),
@@ -177,7 +179,7 @@ export default async function handler(req, res) {
 
       if (state.idx >= QUESTIONS_PER_QUIZ) {
         const passed = state.correct >= PASS_CORRECT;
-        const granted = passed ? await grantReward(state.correct, state.tier) : false;
+        const granted = passed ? await grantReward(state.correct, state.tier, state.target) : false;
         res.status(200).json({
           feedback: evalr.feedback, wasCorrect: !!evalr.correct, done: true,
           summary: { correct: state.correct, total: QUESTIONS_PER_QUIZ, passed, granted,
