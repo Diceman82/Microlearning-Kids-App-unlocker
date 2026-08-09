@@ -102,6 +102,7 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,3.6vw,18px); mar
 .mode-btn.wizard{background:#6b3fa0; border-top:6px solid #a97fd6;}
 .mode-btn.emergency{background:#b0402a; border-top:6px solid #ff7a5c;}
 .mode-btn.emergency:disabled{background:#4a3a36; border-top-color:#6a5a55; opacity:.6; cursor:default;}
+.mode-btn.tv{background:#2b6ea0; border-top:6px solid #6cc2f5;}
 .mode-btn:active{transform:translateY(3px);}
 
 /* results */
@@ -149,8 +150,18 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(13px,3.6vw,18px); mar
 
   <div id="toast"></div>
 
+  <!-- DEVICE SELECT -->
+  <div class="overlay" id="device-overlay">
+    <div class="card">
+      <h2 id="d-title">CE VREI SĂ DEBLOCHEZI?</h2>
+      <button class="mode-btn runner" id="btn-dev-phone">📱 TELEFON<small>Family Link · instant</small></button>
+      <button class="mode-btn wizard" id="btn-dev-tablet">📱 TABLETĂ<small>Family Link · instant</small></button>
+      <button class="mode-btn tv" id="btn-dev-tv">📺 TV<small>timp local · se scurge cât te uiți</small></button>
+    </div>
+  </div>
+
   <!-- MODE SELECT -->
-  <div class="overlay" id="mode-overlay">
+  <div class="overlay hidden" id="mode-overlay">
     <div class="card">
       <h2 id="m-title">ALEGE AVENTURA</h2>
       <button class="mode-btn runner" id="btn-mode-runner">⛏ BLOCK RUNNER<small id="m-runner-sub">Matematică · alergare printre blocuri</small></button>
@@ -247,6 +258,7 @@ const STR = {
     pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`, haSent:'📡 SENT TO HOME ASSISTANT',
     fracOf:(a,b,n)=>`${a}/${b} of ${n} = ?`,
     modeTitle:'CHOOSE YOUR ADVENTURE', modeRunnerSub:'Math · run through the blocks',
+    devTitle:'WHAT DO YOU WANT TO UNLOCK?',
     modeQuizSub:'Romanian · Math · Geography — with your voice',
     sosSub:'5 quick sums · left today:', sosFail:'You need all 5 correct. Try again — this one still counts as available!',
     unlockHelmet:'🪖 GOLD HELMET UNLOCKED!', unlockCape:'🟥 CAPE UNLOCKED!',
@@ -270,6 +282,7 @@ const STR = {
     pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`, haSent:'📡 TRIMIS CĂTRE HOME ASSISTANT',
     fracOf:(a,b,n)=>`${a}/${b} din ${n} = ?`,
     modeTitle:'ALEGE AVENTURA', modeRunnerSub:'Matematică · alergare printre blocuri',
+    devTitle:'CE VREI SĂ DEBLOCHEZI?',
     modeQuizSub:'Română · Mate · Geografie — cu vocea ta',
     sosSub:'5 calcule rapide · rămase azi:', sosFail:'Îți trebuie toate 5 corecte. Mai încearcă — asta încă îți rămâne disponibilă!',
     unlockHelmet:'🪖 CASCĂ DE AUR DEBLOCATĂ!', unlockCape:'🟥 PELERINĂ DEBLOCATĂ!',
@@ -285,7 +298,7 @@ const S = {
   running:false, qIndex:0, correct:0, wrong:0, score:0,
   streak:0, bestStreak:0, tier:0, bestTier:0,
   wrongStreak:0, qStartTime:0, sessionStart:0,
-  helmet:false, cape:false, current:null, emergency:false,
+  helmet:false, cape:false, current:null, emergency:false, target:'phone',
 };
 /* lungimea sesiunii curente (normal vs urgență) */
 function sessionLen(){ return S.emergency ? CONFIG.EMERGENCY.QUESTIONS : CONFIG.QUESTIONS_PER_SESSION; }
@@ -526,6 +539,7 @@ function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.display='blo
 function applyStrings(){
   $('t-title').textContent=T.title; $('t-score').textContent=T.score;
   $('m-title').textContent=T.modeTitle;
+  $('d-title').textContent=T.devTitle;
   $('m-runner-sub').textContent=T.modeRunnerSub; $('m-quiz-sub').textContent=T.modeQuizSub;
   $('s-title').textContent=T.startTitle; $('s-desc').textContent=T.startDesc;
   $('s-rule').textContent=T.startRule(CONFIG.QUESTIONS_PER_SESSION,CONFIG.PASS_ACCURACY);
@@ -640,7 +654,7 @@ function endSession(){
       player:CONFIG.PLAYER_NAME, score:S.score, correct:S.correct, total:S.qIndex,
       acc:acc, tier:S.emergency?'URGENTA':T.tiers[S.bestTier], tieridx:S.bestTier,
       code:sessionCode(), mins:rewardMins, mode:S.emergency?'emergency':'normal',
-      ts:new Date().toISOString()
+      target:S.target, ts:new Date().toISOString()
     }).toString();
     try{
       fetch(CONFIG.HA_WEBHOOK_URL+'?'+q, {method:'POST', mode:'no-cors', keepalive:true})
@@ -658,13 +672,17 @@ function startSession(emergency){
   $('end-overlay').classList.add('hidden');
   updateHUD(); nextQuestion();
 }
+$('btn-dev-phone').onclick=()=>{ S.target='phone'; $('device-overlay').classList.add('hidden'); $('mode-overlay').classList.remove('hidden'); };
+$('btn-dev-tablet').onclick=()=>{ S.target='tablet'; $('device-overlay').classList.add('hidden'); $('mode-overlay').classList.remove('hidden'); };
+$('btn-dev-tv').onclick=()=>{ S.target='tv'; $('device-overlay').classList.add('hidden'); $('mode-overlay').classList.remove('hidden'); };
 $('btn-mode-runner').onclick=()=>{
   $('mode-overlay').classList.add('hidden');
   $('start-overlay').classList.remove('hidden');
 };
-$('btn-mode-quiz').onclick=()=>{ window.location.href='/quiz'; };
+$('btn-mode-quiz').onclick=()=>{ window.location.href='/quiz?target='+encodeURIComponent(S.target); };
 $('btn-mode-sos').onclick=()=>{
   if(sosLeft()<=0) return;
+  S.target='phone';  // urgența e mereu pe telefon
   $('mode-overlay').classList.add('hidden');
   beep(660,.05); startSession(true);
 };

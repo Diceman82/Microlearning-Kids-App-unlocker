@@ -154,6 +154,7 @@ h1{font-family:'Press Start 2P',monospace; font-size:clamp(11px,3.4vw,15px); mar
 <script>
 const $=(id)=>document.getElementById(id);
 let token=null, busy=false;
+const urlTarget = new URLSearchParams(location.search).get('target') || 'phone';
 
 /* ---------- text-to-speech (vocea profesorului) ----------
    1) încearcă vocea neurală de pe server (/api/tts, dacă e configurată)
@@ -258,7 +259,7 @@ async function startQuiz(){
   const loadTimer=setInterval(()=>{ mi=(mi+1)%MSGS.length; $('load-msg').textContent=MSGS[mi]; }, 1800);
   try{
     const d=await api({action:'start',
-      subject:$('sel-subject').value, rank:$('sel-rank').value});
+      subject:$('sel-subject').value, rank:$('sel-rank').value, target:urlTarget});
     token=d.token;
     clearInterval(loadTimer);
     $('loading').style.display='none';
