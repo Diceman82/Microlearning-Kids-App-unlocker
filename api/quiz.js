@@ -137,9 +137,13 @@ async function grantReward(correct, tierLabel, target) {
     ts: new Date().toISOString(), verified: '1',
   });
   try {
-    await fetch(process.env.HA_WEBHOOK_URL + '?' + qs.toString(), { method: 'POST' });
-    return true;
-  } catch (e) { return false; }
+    const r = await fetch(process.env.HA_WEBHOOK_URL + '?' + qs.toString(), { method: 'POST' });
+    if (!r.ok) console.error('HA webhook answered', r.status);
+    return r.ok;
+  } catch (e) {
+    console.error('HA webhook unreachable:', e && e.message);
+    return false;
+  }
 }
 
 /* ---------- handler ---------- */

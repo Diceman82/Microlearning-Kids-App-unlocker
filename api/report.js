@@ -62,9 +62,15 @@ export default async function handler(req, res) {
   qs.set('verified', '1');
 
   try {
-    await fetch(target + '?' + qs.toString(), { method: 'POST' });
+    const r = await fetch(target + '?' + qs.toString(), { method: 'POST' });
+    if (!r.ok) {
+      console.error('HA webhook answered', r.status);
+      res.status(502).json({ error: 'ha rejected', status: r.status });
+      return;
+    }
     res.status(200).json({ ok: true, verified: true });
   } catch (e) {
+    console.error('HA webhook unreachable:', e && e.message);
     res.status(502).json({ error: 'forward failed' });
   }
 }

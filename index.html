@@ -255,7 +255,7 @@ const STR = {
     failMsg:(p)=>`You need ${p}% accuracy. You're close — one more run!`,
     combo:(x)=>`COMBO x${x}`, speed:'⚡ SPEED BONUS +5',
     pctOf:(p,n)=>`${p}% of ${n} = ?`, pctReverse:(a,n)=>`${a} is what % of ${n}?`,
-    pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`, haSent:'📡 SENT TO HOME ASSISTANT',
+    pctSolved:(a,p,n)=>`${a} is ${p}% of ${n}`, haSent:'📡 SENT TO HOME ASSISTANT', haFail:'⚠️ NOT DELIVERED — USE "SEND TO PARENT"',
     fracOf:(a,b,n)=>`${a}/${b} of ${n} = ?`,
     modeTitle:'CHOOSE YOUR ADVENTURE', modeRunnerSub:'Math · run through the blocks',
     devTitle:'WHAT DO YOU WANT TO UNLOCK?',
@@ -279,7 +279,7 @@ const STR = {
     failMsg:(p)=>`Ai nevoie de ${p}% acuratețe. Ești aproape — încă o rundă!`,
     combo:(x)=>`COMBO x${x}`, speed:'⚡ BONUS VITEZĂ +5',
     pctOf:(p,n)=>`${p}% din ${n} = ?`, pctReverse:(a,n)=>`${a} e ce % din ${n}?`,
-    pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`, haSent:'📡 TRIMIS CĂTRE HOME ASSISTANT',
+    pctSolved:(a,p,n)=>`${a} este ${p}% din ${n}`, haSent:'📡 TRIMIS CĂTRE HOME ASSISTANT', haFail:'⚠️ NELIVRAT — FOLOSEȘTE „TRIMITE LA PĂRINTE"',
     fracOf:(a,b,n)=>`${a}/${b} din ${n} = ?`,
     modeTitle:'ALEGE AVENTURA', modeRunnerSub:'Matematică · alergare printre blocuri',
     devTitle:'CE VREI SĂ DEBLOCHEZI?',
@@ -657,8 +657,8 @@ function endSession(){
       target:S.target, ts:new Date().toISOString()
     }).toString();
     try{
-      fetch(CONFIG.HA_WEBHOOK_URL+'?'+q, {method:'POST', mode:'no-cors', keepalive:true})
-        .then(()=>toast(T.haSent)).catch(()=>{});
+      fetch(CONFIG.HA_WEBHOOK_URL+'?'+q, {method:'POST', keepalive:true})
+        .then(r=>toast(r.ok?T.haSent:T.haFail)).catch(()=>toast(T.haFail));
     }catch(e){}
   }
   $('end-overlay').classList.remove('hidden');
